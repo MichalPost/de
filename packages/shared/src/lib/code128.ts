@@ -1,31 +1,19 @@
-import { downloadBlob } from './utils'
+import { downloadBlob, escapeXmlText, escapeXmlAttr } from './utils'
 
-const CODE128_PATTERNS = [
-  '212222', '222122', '222221', '121223', '121322', '131222', '122213', '122312', '132212', '221213',
-  '221312', '231212', '112232', '122132', '122231', '113222', '123122', '123221', '223211', '221132',
-  '221231', '213212', '223112', '312131', '311222', '321122', '321221', '312212', '322112', '322211',
-  '212123', '212321', '232121', '111323', '131123', '131321', '112313', '132113', '132311', '211313',
-  '231113', '231311', '112133', '112331', '132131', '113123', '113321', '133121', '313121', '211331',
-  '231131', '213113', '213311', '213131', '311123', '311321', '331121', '312113', '312311', '332111',
-  '314111', '221411', '431111', '111224', '111422', '121124', '121421', '141122', '141221', '112214',
-  '112412', '122114', '122411', '142112', '142211', '241211', '221114', '413111', '241112', '134111',
-  '111242', '121142', '121241', '114212', '124112', '124211', '411212', '421112', '421211', '212141',
-  '214121', '412121', '111143', '111341', '131141', '114113', '114311', '411113', '411311', '113141',
-  '114131', '311141', '411131', '211412', '211214', '211232', '2331112',
-]
-
-function escapeXmlText(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-}
-
-function escapeXmlAttr(value: string): string {
-  return escapeXmlText(value)
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;')
-}
+// Map<code, pattern> for O(1) lookup instead of array index access
+const CODE128_PATTERNS = new Map<number, string>([
+  [0,'212222'],[1,'222122'],[2,'222221'],[3,'121223'],[4,'121322'],[5,'131222'],[6,'122213'],[7,'122312'],[8,'132212'],[9,'221213'],
+  [10,'221312'],[11,'231212'],[12,'112232'],[13,'122132'],[14,'122231'],[15,'113222'],[16,'123122'],[17,'123221'],[18,'223211'],[19,'221132'],
+  [20,'221231'],[21,'213212'],[22,'223112'],[23,'312131'],[24,'311222'],[25,'321122'],[26,'321221'],[27,'312212'],[28,'322112'],[29,'322211'],
+  [30,'212123'],[31,'212321'],[32,'232121'],[33,'111323'],[34,'131123'],[35,'131321'],[36,'112313'],[37,'132113'],[38,'132311'],[39,'211313'],
+  [40,'231113'],[41,'231311'],[42,'112133'],[43,'112331'],[44,'132131'],[45,'113123'],[46,'113321'],[47,'133121'],[48,'313121'],[49,'211331'],
+  [50,'231131'],[51,'213113'],[52,'213311'],[53,'213131'],[54,'311123'],[55,'311321'],[56,'331121'],[57,'312113'],[58,'312311'],[59,'332111'],
+  [60,'314111'],[61,'221411'],[62,'431111'],[63,'111224'],[64,'111422'],[65,'121124'],[66,'121421'],[67,'141122'],[68,'141221'],[69,'112214'],
+  [70,'112412'],[71,'122114'],[72,'122411'],[73,'142112'],[74,'142211'],[75,'241211'],[76,'221114'],[77,'413111'],[78,'241112'],[79,'134111'],
+  [80,'111242'],[81,'121142'],[82,'121241'],[83,'114212'],[84,'124112'],[85,'124211'],[86,'411212'],[87,'421112'],[88,'421211'],[89,'212141'],
+  [90,'214121'],[91,'412121'],[92,'111143'],[93,'111341'],[94,'131141'],[95,'114113'],[96,'114311'],[97,'411113'],[98,'411311'],[99,'113141'],
+  [100,'114131'],[101,'311141'],[102,'411131'],[103,'211412'],[104,'211214'],[105,'211232'],[106,'2331112'],
+])
 
 function encodeCode128B(text: string): number[] {
   if (!text || !text.length) {
@@ -58,9 +46,17 @@ export function createBarcodeSvg(text: string, options: { moduleWidth?: number; 
   // sharp=true: no rx rounding on bars — better for high-res raster export
   const rx = options.sharp ? '0' : '1'
 
-  const patterns = encodeCode128B(text).map((code) => CODE128_PATTERNS[code])
+  const patterns = encodeCode128B(text).map((code) => {
+    const pattern = CODE128_PATTERNS.get(code)
+    if (!pattern) throw new Error(`Unknown Code128 code: ${code}`)
+    return pattern
+  })
   const totalModules = patterns.reduce(
-    (sum, pattern) => sum + Array.from(pattern).reduce((inner, width) => inner + Number(width), 0),
+    (sum, pattern) => {
+      let inner = 0
+      for (const ch of pattern) inner += Number(ch)
+      return sum + inner
+    },
     0,
   )
   const barcodeWidth = (quietZone * 2 + totalModules) * moduleWidth
@@ -104,11 +100,6 @@ export function createBarcodeSvg(text: string, options: { moduleWidth?: number; 
   `.trim()
 }
 
-export function downloadBarcodeSvg(text: string, filename: string): void {
-  const svg = createBarcodeSvg(text)
-  downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), filename)
-}
-
 export async function downloadBarcodePng(text: string, filename: string): Promise<void> {
   if (typeof Image === 'undefined' || typeof document === 'undefined') {
     throw new Error('PNG export is only available in a browser environment.')
@@ -137,61 +128,10 @@ export async function downloadBarcodePng(text: string, filename: string): Promis
   context.scale(2, 2)
   context.drawImage(image, 0, 0)
 
-  const pngBlob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((generatedBlob) => {
-      if (!generatedBlob) {
-        reject(new Error('Failed to create PNG blob.'))
-        return
-      }
-      resolve(generatedBlob)
-    }, 'image/png')
-  })
+  const pngBlob = await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob(b => b ? resolve(b) : reject(new Error('Failed to create PNG blob.')), 'image/png')
+  )
 
   URL.revokeObjectURL(url)
   downloadBlob(pngBlob, filename)
-}
-
-export function openBarcodePrintView(text: string, title: string): void {
-  if (typeof window === 'undefined') {
-    throw new Error('Print preview is only available in a browser environment.')
-  }
-
-  const svg = createBarcodeSvg(text, { height: 112, moduleWidth: 2.3, fontSize: 16, caption: text })
-  const printWindow = window.open('', '_blank', 'width=900,height=640')
-  if (!printWindow) {
-    throw new Error('Unable to open print window.')
-  }
-
-  printWindow.document.title = title
-  printWindow.document.head.innerHTML = `
-    <style>
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: #f3efe6;
-        font-family: 'Manrope', 'Segoe UI', sans-serif;
-      }
-      article {
-        padding: 32px;
-        border: 1px solid #d5c6ae;
-        background: white;
-      }
-      h1 {
-        margin: 0 0 16px;
-        font-size: 18px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        font-family: 'IBM Plex Mono', monospace;
-      }
-    </style>
-  `
-  printWindow.document.body.innerHTML = `
-    <article>
-      <h1>${title}</h1>
-      ${svg}
-    </article>
-  `
-  printWindow.onload = () => printWindow.print()
 }

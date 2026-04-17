@@ -1,6 +1,6 @@
 import { expose } from 'comlink'
-import { buildBatchCodes, parseReagentIds } from '@chemtools/shared/features/batch/batchEngine'
-import type { TemplateDefinition, BatchGeneratedRecord } from '@chemtools/shared/features/batch/types'
+import { buildBatchCodes, parseReagentIds } from './batchEngine'
+import type { TemplateDefinition, BatchGeneratedRecord } from './types'
 
 const api = {
   buildBatchCodes(

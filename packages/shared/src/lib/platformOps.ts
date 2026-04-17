@@ -1,3 +1,6 @@
+import { createContext, useContext } from 'react'
+import type { BatchGeneratedRecord } from '../features/batch/types'
+
 /**
  * Platform-specific file/clipboard/print operations.
  * Each app provides its own implementation via PlatformOpsContext.Provider.
@@ -17,20 +20,20 @@ export interface PlatformOps {
   readFileAsBlob(file: File): Promise<Blob>
   // Batch export — platform-specific (web: <a> download, mobile: Capacitor share)
   exportBatchAsPng(
-    records: import('../features/batch/types').BatchGeneratedRecord[],
+    records: BatchGeneratedRecord[],
     globalMode: 'long' | 'short' | 'both' | undefined,
     cols: number,
     perPage: number,
     filename: string,
   ): Promise<void>
   copyBatchAsImage(
-    records: import('../features/batch/types').BatchGeneratedRecord[],
+    records: BatchGeneratedRecord[],
     globalMode: 'long' | 'short' | 'both' | undefined,
     cols: number,
     perPage: number,
   ): Promise<void>
   exportBatchAsPdf(
-    records: import('../features/batch/types').BatchGeneratedRecord[],
+    records: BatchGeneratedRecord[],
     globalMode: 'long' | 'short' | 'both' | undefined,
     cols: number,
     perPage: number,
@@ -47,7 +50,6 @@ export interface PlatformOps {
   ): Promise<void>
   readonly maxPagesPerPng: number
 }
-import { createContext, useContext } from 'react'
 
 export const PlatformOpsContext = createContext<PlatformOps | null>(null)
 

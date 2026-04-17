@@ -86,22 +86,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               key={to}
               to={to}
               onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-[13px] transition-all duration-150"
+              className={({ isActive }) => `flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-[13px] transition-all duration-150${isActive ? ' nav-active' : ''}`}
+              style={({ isActive }) => ({
+                backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
+                color: isActive ? 'var(--accent-text)' : 'var(--text-secondary)',
+                fontWeight: isActive ? 500 : 400,
+              })}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                if (!el.classList.contains('nav-active')) el.style.backgroundColor = 'var(--bg-hover)'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                if (!el.classList.contains('nav-active')) el.style.backgroundColor = 'transparent'
+              }}
             >
               {({ isActive }) => (
-                <span
-                  className={`flex items-center gap-2.5 w-full h-full rounded-lg px-0 ${isActive ? 'nav-active' : ''}`}
-                  style={{
-                    color: isActive ? 'var(--accent-text)' : 'var(--text-secondary)',
-                    backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
-                    fontWeight: isActive ? 500 : 400,
-                  }}
-                  onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)' }}
-                  onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
-                >
+                <>
                   <Icon className="w-4 h-4 shrink-0 opacity-70" />
                   {label}
-                </span>
+                </>
               )}
             </NavLink>
           ))}
@@ -112,22 +116,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <NavLink
             to="/settings"
             onClick={() => setSidebarOpen(false)}
-            className="flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-[13px] transition-all duration-150"
+            className={({ isActive }) => `flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-[13px] transition-all duration-150${isActive ? ' nav-active' : ''}`}
+            style={({ isActive }) => ({
+              backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
+              color: isActive ? 'var(--accent-text)' : 'var(--text-muted)',
+              fontWeight: isActive ? 500 : 400,
+            })}
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLElement
+              if (!el.classList.contains('nav-active')) el.style.backgroundColor = 'var(--bg-hover)'
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLElement
+              if (!el.classList.contains('nav-active')) el.style.backgroundColor = 'transparent'
+            }}
           >
-            {({ isActive }) => (
-              <span
-                className={`flex items-center gap-2.5 w-full h-full rounded-lg px-0 ${isActive ? 'nav-active' : ''}`}
-                style={{
-                  color: isActive ? 'var(--accent-text)' : 'var(--text-muted)',
-                  backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
-                  fontWeight: isActive ? 500 : 400,
-                }}
-                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)' }}
-                onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent' }}
-              >
+            {() => (
+              <>
                 <SettingsIcon className="w-4 h-4 shrink-0 opacity-70" />
                 设置
-              </span>
+              </>
             )}
           </NavLink>
         </div>

@@ -17,12 +17,15 @@ export type BatchWorkerApi = {
   parseReagentIds: (raw: string) => Promise<number[]>
 }
 
-export function useBatchWorker(workerUrl: URL): Remote<BatchWorkerApi> {
+// Worker URL is resolved relative to this file so Vite can statically analyse it
+const WORKER_URL = new URL('./batchWorker.ts', import.meta.url)
+
+export function useBatchWorker(): Remote<BatchWorkerApi> {
   const workerRef = useRef<Worker | null>(null)
   const apiRef = useRef<Remote<BatchWorkerApi> | null>(null)
 
   if (!workerRef.current) {
-    workerRef.current = new Worker(workerUrl, { type: 'module' })
+    workerRef.current = new Worker(WORKER_URL, { type: 'module' })
     apiRef.current = wrap<BatchWorkerApi>(workerRef.current)
   }
 

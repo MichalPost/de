@@ -1,141 +1,24 @@
 import type * as React from 'react'
-import { renderBarcodeToCanvas } from '@chemtools/shared/lib/barcode'
+import { formatFileTimestamp } from '@chemtools/shared/lib/utils'
+import {
+  MAX_PAGES_PER_PNG,
+  renderPagesAsCanvases,
+  mergeCanvases,
+  addPngSuffix,
+  renderBatchAsBlobs,
+} from '@chemtools/shared/features/batch/exportBatch'
 import type { BatchGeneratedRecord } from './types'
 
-// To avoid large memory spikes, cap how many "layout pages" we merge into one PNG.
-// When total pages exceed this, export multiple PNG files with page-range suffix.
-export const MAX_PAGES_PER_PNG = 8
+export { MAX_PAGES_PER_PNG, renderPagesAsCanvases, mergeCanvases, addPngSuffix }
 
-// ─── Layout engine ────────────────────────────────────────────────────────────
-
-interface RenderOptions {
-  records: BatchGeneratedRecord[]
-  globalMode?: 'long' | 'short' | 'both'
-  cols: number
-  perPage: number
-  /** px per module. Higher = sharper. Default 3 */
-  moduleWidth?: number
-  shortModuleWidth?: number
-  barcodeHeight?: number
-  pagePaddingPx?: number
-  gapPx?: number
-  fontSize?: number
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  window.setTimeout(() => URL.revokeObjectURL(url), 5000)
 }
-
-type BarItem = { canvas: HTMLCanvasElement; ascii: string }
-
-function formatFileTimestamp(date = new Date()) {
-  const yyyy = date.getFullYear()
-  const mm = String(date.getMonth() + 1).padStart(2, '0')
-  const dd = String(date.getDate()).padStart(2, '0')
-  const hh = String(date.getHours()).padStart(2, '0')
-  const min = String(date.getMinutes()).padStart(2, '0')
-  const ss = String(date.getSeconds()).padStart(2, '0')
-  return `${yyyy}${mm}${dd}${hh}${min}${ss}`
-}
-
-function buildPageItems(
-  records: BatchGeneratedRecord[],
-  globalMode: 'long' | 'short' | 'both' | undefined,
-  moduleWidth: number,
-  shortModuleWidth: number,
-  barcodeHeight: number,
-  fontSize: number,
-): BarItem[][] {
-  return records.map(r => {
-    const mode = globalMode ?? r.printMode
-    const items: BarItem[] = []
-    if (mode === 'long' || mode === 'both') {
-      items.push({
-        canvas: renderBarcodeToCanvas(r.encodedAscii, { width: moduleWidth, height: barcodeHeight, fontSize, margin: 12 }),
-        ascii: r.encodedAscii,
-      })
-    }
-    if (mode === 'short' || mode === 'both') {
-      items.push({
-        canvas: renderBarcodeToCanvas(r.shortAscii, { width: shortModuleWidth, height: barcodeHeight, fontSize, margin: 12 }),
-        ascii: r.shortAscii,
-      })
-    }
-    return items
-  })
-}
-
-function renderPagesAsCanvases(opts: RenderOptions): HTMLCanvasElement[] {
-  const {
-    records, globalMode, cols, perPage,
-    moduleWidth = 3,
-    shortModuleWidth = 4,
-    barcodeHeight = 100,
-    pagePaddingPx = 32,
-    gapPx = 8,
-    fontSize = 20,
-  } = opts
-
-  const pages: BatchGeneratedRecord[][] = []
-  for (let i = 0; i < records.length; i += perPage) pages.push(records.slice(i, i + perPage))
-
-  return pages.map(pageRecords => {
-    const allItems = buildPageItems(pageRecords, globalMode, moduleWidth, shortModuleWidth, barcodeHeight, fontSize)
-
-    const cellW = Math.max(...allItems.flat().map(b => b.canvas.width), 1)
-    const cellH = allItems.reduce((max, bars) =>
-      Math.max(max, bars.reduce((s, b) => s + b.canvas.height + 6, 0)), 0)
-
-    const rows = Math.ceil(pageRecords.length / cols)
-    const pageW = pagePaddingPx * 2 + cols * cellW + (cols - 1) * gapPx
-    const pageH = pagePaddingPx * 2 + rows * cellH + (rows - 1) * gapPx
-
-    const canvas = document.createElement('canvas')
-    canvas.width = pageW
-    canvas.height = pageH
-    const ctx = canvas.getContext('2d')!
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, pageW, pageH)
-
-    pageRecords.forEach((_, ri) => {
-      const col = ri % cols
-      const row = Math.floor(ri / cols)
-      const cellX = pagePaddingPx + col * (cellW + gapPx)
-      const cellY = pagePaddingPx + row * (cellH + gapPx)
-      let y = cellY
-
-      allItems[ri].forEach(item => {
-        const offsetX = cellX + Math.round((cellW - item.canvas.width) / 2)
-        ctx.drawImage(item.canvas, offsetX, y)
-        y += item.canvas.height + 6
-      })
-    })
-
-    return canvas
-  })
-}
-
-function mergeCanvases(pages: HTMLCanvasElement[]): HTMLCanvasElement {
-  const totalH = pages.reduce((s, c) => s + c.height, 0)
-  const maxW = Math.max(...pages.map(c => c.width))
-  const merged = document.createElement('canvas')
-  merged.width = maxW
-  merged.height = totalH
-  const ctx = merged.getContext('2d')!
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, maxW, totalH)
-  let y = 0
-  for (const p of pages) {
-    ctx.drawImage(p, Math.round((maxW - p.width) / 2), y)
-    y += p.height
-  }
-  return merged
-}
-
-function addPngSuffix(filename: string, suffix: string) {
-  // Only append suffix before extension when filename ends with ".png" (case-insensitive).
-  const lower = filename.toLowerCase()
-  if (lower.endsWith('.png')) return `${filename.slice(0, -4)}${suffix}.png`
-  return `${filename}${suffix}`
-}
-
-// ─── Public API ───────────────────────────────────────────────────────────────
 
 export async function exportResultsAsPng(
   records: BatchGeneratedRecord[],
@@ -144,49 +27,8 @@ export async function exportResultsAsPng(
   perPage: number,
   filename: string,
 ): Promise<void> {
-  const totalPages = Math.max(1, Math.ceil(records.length / perPage))
-  const shouldSplit = totalPages > MAX_PAGES_PER_PNG
-
-  // Export as a single PNG.
-  if (!shouldSplit) {
-    const pages = renderPagesAsCanvases({ records, globalMode, cols, perPage })
-    const merged = mergeCanvases(pages)
-    const blob = await new Promise<Blob>((res, rej) =>
-      merged.toBlob(b => b ? res(b) : rej(new Error('toBlob failed')), 'image/png')
-    )
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.click()
-    window.setTimeout(() => URL.revokeObjectURL(url), 5000)
-    return
-  }
-
-  // Export multiple PNGs, each merges up to MAX_PAGES_PER_PNG layout pages.
-  const numChunks = Math.ceil(totalPages / MAX_PAGES_PER_PNG)
-  for (let chunkIndex = 0; chunkIndex < numChunks; chunkIndex++) {
-    const startPage = chunkIndex * MAX_PAGES_PER_PNG // 0-based
-    const endPageExclusive = Math.min(totalPages, startPage + MAX_PAGES_PER_PNG) // 0-based, exclusive
-
-    const startRecord = startPage * perPage
-    const endRecord = Math.min(records.length, endPageExclusive * perPage)
-    const chunkRecords = records.slice(startRecord, endRecord)
-
-    const pages = renderPagesAsCanvases({ records: chunkRecords, globalMode, cols, perPage })
-    const merged = mergeCanvases(pages)
-    const blob = await new Promise<Blob>((res, rej) =>
-      merged.toBlob(b => b ? res(b) : rej(new Error('toBlob failed')), 'image/png')
-    )
-
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    const outName = addPngSuffix(filename, `_p${startPage + 1}-${endPageExclusive}`)
-    a.download = outName
-    a.click()
-    window.setTimeout(() => URL.revokeObjectURL(url), 5000)
-  }
+  const chunks = await renderBatchAsBlobs(records, globalMode, cols, perPage, filename)
+  for (const { blob, name } of chunks) downloadBlob(blob, name)
 }
 
 export async function copyResultsAsImage(
@@ -195,15 +37,12 @@ export async function copyResultsAsImage(
   cols: number,
   perPage: number,
 ): Promise<void> {
-  const pages = renderPagesAsCanvases({ records, globalMode, cols, perPage })
-  const merged = mergeCanvases(pages)
-  const blob = await new Promise<Blob>((res, rej) =>
-    merged.toBlob(b => b ? res(b) : rej(new Error('toBlob failed')), 'image/png')
-  )
+  const { canvasToBlob } = await import('@chemtools/shared/lib/utils')
+  const merged = mergeCanvases(renderPagesAsCanvases({ records, globalMode, cols, perPage }))
+  const blob = await canvasToBlob(merged)
   await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
 }
 
-/** PDF export using @react-pdf/renderer —?true vector, small file size */
 export async function exportResultsAsPdf(
   records: BatchGeneratedRecord[],
   globalMode: 'long' | 'short' | 'both' | undefined,
@@ -216,19 +55,11 @@ export async function exportResultsAsPdf(
   type DocumentProps = import('@react-pdf/renderer').DocumentProps
   const { createElement } = await import('react')
   const { BatchPdfDocument } = await import('./BatchPdfDocument')
-
   const doc = createElement(BatchPdfDocument, { records, globalMode, cols, perPage, scale }) as React.ReactElement<DocumentProps>
   const blob = await pdf(doc).toBlob()
-
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${formatFileTimestamp()}.pdf`
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 5000)
+  downloadBlob(blob, `${formatFileTimestamp()}.pdf`)
 }
 
-/** Export a single barcode as PDF, same layout as batch export */
 export async function exportSingleBarcodePdf(
   encodedAscii: string,
   shortAscii: string,
@@ -241,20 +72,11 @@ export async function exportSingleBarcodePdf(
     payloadHex: '', encodedAscii, encodedHex: '', shortAscii, shortHex: '',
     longSvg: '', shortSvg: '', printMode: mode,
   }
-  const singleName = formatFileTimestamp()
-
   const { pdf } = await import('@react-pdf/renderer')
   type DocumentProps = import('@react-pdf/renderer').DocumentProps
   const { createElement } = await import('react')
   const { BatchPdfDocument } = await import('./BatchPdfDocument')
-
   const doc = createElement(BatchPdfDocument, { records: [record], globalMode: mode, cols: 1, perPage: 1, scale }) as React.ReactElement<DocumentProps>
   const blob = await pdf(doc).toBlob()
-
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${singleName}.pdf`
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 5000)
+  downloadBlob(blob, `${formatFileTimestamp()}.pdf`)
 }

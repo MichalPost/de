@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Webapp Capacitor</string>
-    <string name="title_activity_main">Webapp Capacitor</string>
+    <string name="app_name">条码助手</string>
+    <string name="title_activity_main">条码助手</string>
     <string name="package_name">com.chemtools.webapp</string>
     <string name="custom_url_scheme">com.chemtools.webapp</string>
 </resources>

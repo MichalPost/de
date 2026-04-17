@@ -77,28 +77,6 @@ export async function downloadBarcodePng(text: string, filename: string, options
 }
 
 /**
- * Download barcode as SVG file (via JsBarcode SVG renderer).
- */
-export function downloadBarcodeSvg(text: string, filename: string): void {
-  // JsBarcode can render to a detached SVG element
-  const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  JsBarcode(svgEl, text, {
-    format: 'CODE128',
-    width: 2,
-    height: 80,
-    displayValue: true,
-    fontSize: 14,
-    font: '"IBM Plex Mono", monospace',
-    margin: 10,
-    background: '#ffffff',
-    lineColor: '#181514',
-    xmlDocument: document,
-  })
-  const svgStr = new XMLSerializer().serializeToString(svgEl)
-  downloadBlob(new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' }), filename)
-}
-
-/**
  * Open a print preview window with the barcode.
  */
 export function openBarcodePrintView(text: string, title: string): void {

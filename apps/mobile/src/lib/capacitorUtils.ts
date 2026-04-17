@@ -1,16 +1,12 @@
 import { renderBarcodeToCanvas } from '@chemtools/shared/lib/barcode'
+import { canvasToBlob, blobToBase64 } from '@chemtools/shared/lib/utils'
 
-/** Convert blob to base64 string (without data: prefix) */
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      resolve(result.split(',')[1])
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
+/** Write a base64 string to Capacitor cache and share it. */
+async function writeAndShare(filename: string, base64: string, title: string): Promise<void> {
+  const { Filesystem, Directory } = await import('@capacitor/filesystem')
+  const { Share } = await import('@capacitor/share')
+  const result = await Filesystem.writeFile({ path: filename, data: base64, directory: Directory.Cache })
+  await Share.share({ title, url: result.uri, dialogTitle: '保存或分享' })
 }
 
 /**
@@ -23,57 +19,18 @@ export async function copyBarcodeAsPng(ascii: string, isShort = false): Promise<
     fontSize: 18,
     margin: 14,
   })
-  const blob = await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png')
-  )
-
-  const { Filesystem, Directory } = await import('@capacitor/filesystem')
-  const { Share } = await import('@capacitor/share')
-
-  const base64 = await blobToBase64(blob)
+  const base64 = await blobToBase64(await canvasToBlob(canvas))
   const filename = `barcode-${Date.now()}.png`
-  const result = await Filesystem.writeFile({
-    path: filename,
-    data: base64,
-    directory: Directory.Cache,
-  })
-
-  await Share.share({
-    title: '条码图片',
-    url: result.uri,
-    dialogTitle: '保存或分享条码',
-  })
+  await writeAndShare(filename, base64, '条码图片')
 }
 
 /**
  * Download barcode PNG using Capacitor Filesystem + Share
  */
 export async function downloadBarcodePng(text: string, filename: string): Promise<void> {
-  const canvas = renderBarcodeToCanvas(text, {
-    width: 3,
-    height: 120,
-    fontSize: 18,
-    margin: 14,
-  })
-  const blob = await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png')
-  )
-
-  const { Filesystem, Directory } = await import('@capacitor/filesystem')
-  const { Share } = await import('@capacitor/share')
-
-  const base64 = await blobToBase64(blob)
-  const result = await Filesystem.writeFile({
-    path: filename,
-    data: base64,
-    directory: Directory.Cache,
-  })
-
-  await Share.share({
-    title: filename,
-    url: result.uri,
-    dialogTitle: '保存或分享',
-  })
+  const canvas = renderBarcodeToCanvas(text, { width: 3, height: 120, fontSize: 18, margin: 14 })
+  const base64 = await blobToBase64(await canvasToBlob(canvas))
+  await writeAndShare(filename, base64, filename)
 }
 
 /**
@@ -88,21 +45,7 @@ export async function openBarcodePrintView(text: string, title: string): Promise
  * Export JSON file using Capacitor Filesystem + Share
  */
 export async function exportJsonFile(data: unknown, filename: string): Promise<void> {
-  const json = JSON.stringify(data, null, 2)
-  const { Filesystem, Directory } = await import('@capacitor/filesystem')
-  const { Share } = await import('@capacitor/share')
-
-  const result = await Filesystem.writeFile({
-    path: filename,
-    data: btoa(json), // base64 encode
-    directory: Directory.Cache,
-  })
-
-  await Share.share({
-    title: filename,
-    url: result.uri,
-    dialogTitle: '保存或分享',
-  })
+  await writeAndShare(filename, btoa(JSON.stringify(data, null, 2)), filename)
 }
 
 /**
