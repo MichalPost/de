@@ -302,7 +302,7 @@ function BarcodeSection({ title, svg, ascii }: { title: string; svg: string | nu
       >
         {svg
           ? <>
-              <div dangerouslySetInnerHTML={{ __html: svg }} className="max-w-full" />
+              <div dangerouslySetInnerHTML={{ __html: svg }} className="max-w-full w-full overflow-hidden [&>svg]:w-full [&>svg]:h-auto" />
               <p className="mt-1.5 text-[12px] font-mono text-center break-all leading-tight" style={{ color: 'var(--barcode-text)', letterSpacing: '0.05em' }}>{ascii}</p>
             </>
           : <span className="text-[12px] m-auto" style={{ color: 'var(--text-muted)' }}>生成编码后显示</span>

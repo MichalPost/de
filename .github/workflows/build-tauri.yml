@@ -54,10 +54,19 @@ jobs:
       - name: 注入版本号
         shell: bash
         run: |
-          VERSION="$(date +'%Y.%-m%d').${{ github.run_number }}"
+          MONTH=$(date +'%-m' 2>/dev/null || date +'%m' | sed 's/^0//')
+          DAY=$(date +'%-d' 2>/dev/null || date +'%d' | sed 's/^0//')
+          YEAR=$(date +'%y')
+          VERSION="${YEAR}.${MONTH}.${DAY}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" apps/desktop/src-tauri/tauri.conf.json
-          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" apps/desktop/src-tauri/Cargo.toml
+          VERSION="$VERSION" node -e "
+            const fs = require('fs');
+            const v = process.env.VERSION;
+            const conf = 'apps/desktop/src-tauri/tauri.conf.json';
+            fs.writeFileSync(conf, fs.readFileSync(conf,'utf8').replace(/\"version\": \"[^\"]*\"/, '\"version\": \"' + v + '\"'));
+            const cargo = 'apps/desktop/src-tauri/Cargo.toml';
+            fs.writeFileSync(cargo, fs.readFileSync(cargo,'utf8').replace(/^version = \"[^\"]*\"/m, 'version = \"' + v + '\"'));
+          "
 
       - name: 构建 Web 资源
         run: pnpm build:web
