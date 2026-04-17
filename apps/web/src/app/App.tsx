@@ -13,7 +13,7 @@ const CryptoPage = lazy(() => import('../pages/CryptoPage').then(m => ({ default
 const BatchPage = lazy(() => import('../pages/BatchPage').then(m => ({ default: m.BatchPage })))
 const ScanBatchPage = lazy(() => import('../pages/ScanBatchPage').then(m => ({ default: m.ScanBatchPage })))
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
-const BitShiftPage = lazy(() => import('../pages/BitShiftPage').then(m => ({ default: m.BitShiftPage })))
+const BitShiftPage = lazy(() => import('../../../../packages/shared/src/pages/BitShiftPage').then(m => ({ default: m.BitShiftPage })))
 const DigitCryptoPage = lazy(() => import('../pages/DigitCryptoPage').then(m => ({ default: m.DigitCryptoPage })))
 
 export function App() {

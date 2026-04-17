@@ -11,6 +11,15 @@
     "./pages/*": "./src/pages/*",
     "./styles.css": "./src/styles.css"
   },
+  "typesVersions": {
+    "*": {
+      "lib/*": ["src/lib/*"],
+      "ui/*": ["src/ui/*"],
+      "store/*": ["src/store/*"],
+      "features/*": ["src/features/*"],
+      "pages/*": ["src/pages/*"]
+    }
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"

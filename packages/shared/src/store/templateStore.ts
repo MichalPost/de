@@ -12,6 +12,23 @@ interface TemplateStore {
   deleteTemplate: (id: string) => void
 }
 
+/** Current schema version — bump when TemplateDefinition gains new required fields */
+const STORE_VERSION = 1
+
+function migrateTemplate(raw: Partial<TemplateDefinition>): TemplateDefinition {
+  const defaults = getDefaultTemplateDefinition()
+  return {
+    ...defaults,
+    ...raw,
+    // v1: ensure new fields added in v1 have defaults
+    genMode: raw.genMode ?? defaults.genMode,
+    genCount: raw.genCount ?? defaults.genCount,
+    genIdList: raw.genIdList ?? defaults.genIdList,
+    printConfig: raw.printConfig ?? defaults.printConfig,
+    serialMode: raw.serialMode ?? defaults.serialMode,
+  }
+}
+
 export const useTemplateStore = create<TemplateStore>()(
   persist(
     (set) => ({
@@ -39,10 +56,15 @@ export const useTemplateStore = create<TemplateStore>()(
     }),
     {
       name: 'reagent-templates',
-      // migrate old manual-save data (key: reagent_templates)
+      version: STORE_VERSION,
+      migrate: (persisted, version) => {
+        const state = persisted as { templates?: Partial<TemplateDefinition>[]; activeId?: string }
+        const templates = (state.templates ?? []).map(migrateTemplate)
+        if (templates.length === 0) templates.push(createTemplate(getDefaultTemplateDefinition()))
+        return { templates, activeId: state.activeId ?? templates[0].id }
+      },
       onRehydrateStorage: () => (state) => {
         if (!state) return
-        // ensure activeId is valid after rehydration
         if (!state.templates.find((t) => t.id === state.activeId)) {
           state.activeId = state.templates[0]?.id ?? ''
         }

@@ -1,4 +1,3 @@
-import { resolve } from 'path'
 import type { UserConfig } from 'vite'
 
 /**
@@ -32,6 +31,3 @@ export const sharedViteConfig: UserConfig = {
     cssMinify: false,
   },
 }
-
-// Re-export resolve for convenience in app configs
-export { resolve }

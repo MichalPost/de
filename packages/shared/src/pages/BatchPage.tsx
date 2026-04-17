@@ -5,7 +5,6 @@ import { Button } from '../ui/Field'
 import { CustomerCodeInput } from '../ui/CustomerCodeInput'
 import { createTemplate, getDefaultTemplateDefinition } from '../features/batch/templateStore'
 import { buildBatchCodes, parseReagentIds } from '../features/batch/batchEngine'
-import { exportResultsAsPng, copyResultsAsImage, exportResultsAsPdf, MAX_PAGES_PER_PNG } from '../features/batch/exportBatch'
 import { TemplateModal } from '../features/batch/TemplateModal'
 import { BatchResultCard } from '../features/batch/BatchResultCard'
 import { BatchHistoryPanel } from '../features/batch/BatchHistoryPanel'
@@ -17,6 +16,7 @@ import { useTemplateStore } from '../store/templateStore'
 import { useBatchDataStore } from '../store/batchDataStore'
 import { useBatchUIStore } from '../store/batchUIStore'
 import { useHistoryStore } from '../store/historyStore'
+import { usePlatformOps } from '../lib/platformOps'
 import type { BatchHistoryEntry, TemplateDefinition } from '../features/batch/types'
 import type { BatchGeneratedRecord } from '../features/batch/types'
 
@@ -43,6 +43,7 @@ export function BatchPage() {
   const copyImageState = useCopyAsync()
   const { showToast } = useToast()
   const { addEntry } = useHistoryStore()
+  const platform = usePlatformOps()
 
   const activeTemplate = templates.find(t => t.id === activeId) ?? templates[0]
   const totalPages = Math.max(1, Math.ceil(records.length / printPerPage))
@@ -112,18 +113,18 @@ export function BatchPage() {
     try {
       setError(null)
       const tp = Math.max(1, Math.ceil(records.length / printPerPage))
-      if (tp > MAX_PAGES_PER_PNG) showToast(`条码长图将按最多?${MAX_PAGES_PER_PNG} 页分批导出，避免内存峰值。`)
-      await exportResultsAsPng(records, effectiveMode, printCols, printPerPage,
+      if (tp > platform.maxPagesPerPng) showToast(`条码长图将按最多 ${platform.maxPagesPerPng} 页分批导出，避免内存峰值。`)
+      await platform.exportBatchAsPng(records, effectiveMode, printCols, printPerPage,
         `批量生成_${activeTemplate.name}_${new Date().toISOString().slice(0, 10)}.png`)
     } catch (e) { setError((e as Error).message) }
   }
   const handleCopyImage = () =>
-    copyImageState.copy(() => copyResultsAsImage(records, effectiveMode, printCols, printPerPage))
+    copyImageState.copy(() => platform.copyBatchAsImage(records, effectiveMode, printCols, printPerPage))
       .catch(e => setError((e as Error).message))
   const handleExportPdf = async () => {
     try {
       setError(null)
-      await exportResultsAsPdf(records, effectiveMode, printCols, printPerPage, activeTemplate.name)
+      await platform.exportBatchAsPdf(records, effectiveMode, printCols, printPerPage, activeTemplate.name)
     } catch (e) { setError((e as Error).message) }
   }
 

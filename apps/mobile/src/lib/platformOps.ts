@@ -5,6 +5,12 @@ import {
   openBarcodePrintView,
   exportJsonFile,
 } from './capacitorUtils'
+import {
+  exportResultsAsPng,
+  copyResultsAsImage,
+  exportResultsAsPdf,
+  MAX_PAGES_PER_PNG,
+} from '../features/batch/exportBatch'
 
 export const mobilePlatformOps: PlatformOps = {
   copyBarcodeAsPng,
@@ -12,7 +18,10 @@ export const mobilePlatformOps: PlatformOps = {
   openBarcodePrintView,
   exportJsonFile,
   readFileAsBlob: async (file) => {
-    // Android revokes File permissions after the first await, so read immediately
     return new Blob([await file.arrayBuffer()], { type: file.type || 'image/jpeg' })
   },
+  exportBatchAsPng: exportResultsAsPng,
+  copyBatchAsImage: copyResultsAsImage,
+  exportBatchAsPdf: exportResultsAsPdf,
+  maxPagesPerPng: MAX_PAGES_PER_PNG,
 }

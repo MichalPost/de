@@ -29,55 +29,51 @@ export interface ShiftResult {
 export function calculateShift(input: ShiftInput): ShiftResult {
   const { number, base, shift, method, padding } = input
 
-  // 解析输入为十进制
   const originalValue = parseInt(number, parseInt(base))
-  
+
   if (isNaN(originalValue) || originalValue < 0) {
     throw new Error('请输入有效的非负整数')
   }
 
-  // 保存原始值的各进制表示
+  // Determine bit width from the actual value (minimum 8 bits)
+  const bitWidth = Math.max(8, originalValue.toString(2).length)
+
   const decOriginal = originalValue
-  const binOriginal = originalValue.toString(2).padStart(8, '0')
+  const binOriginal = originalValue.toString(2).padStart(bitWidth, '0')
   const hexOriginal = originalValue.toString(16).toUpperCase()
 
-  // 执行位移运算
   let result: number
   if (method === '>>') {
-    result = rightShift(originalValue, shift, padding)
+    result = rightShift(originalValue, shift, padding, bitWidth)
   } else {
-    result = leftShift(originalValue, shift, padding)
+    result = leftShift(originalValue, shift, padding, bitWidth)
   }
 
-  // 结果的各进制表示
   const decResult = result
-  const binResult = result.toString(2).padStart(8, '0')
+  const binResult = result.toString(2).padStart(bitWidth, '0')
   const hexResult = result.toString(16).toUpperCase()
 
-  return {
-    binOriginal,
-    binResult,
-    hexOriginal,
-    hexResult,
-    decOriginal,
-    decResult,
-  }
+  return { binOriginal, binResult, hexOriginal, hexResult, decOriginal, decResult }
 }
 
 /**
- * 左移运算：低位补指定值
+ * 左移运算：高位丢弃，低位补指定值
  */
-function leftShift(value: number, shift: number, padding: 0 | 1): number {
-  const binaryString = value.toString(2).padStart(8, '0')
-  const shifted = binaryString.slice(shift) + ''.padEnd(shift, padding === 0 ? '0' : '1')
+function leftShift(value: number, shift: number, padding: 0 | 1, bitWidth: number): number {
+  const clampedShift = Math.min(shift, bitWidth)
+  const binaryString = value.toString(2).padStart(bitWidth, '0')
+  // Drop `clampedShift` high bits, append `clampedShift` padding bits at low end
+  const shifted = binaryString.slice(clampedShift) + ''.padEnd(clampedShift, padding === 0 ? '0' : '1')
   return parseInt(shifted, 2)
 }
 
 /**
- * 右移运算：高位补指定值
+ * 右移运算：低位丢弃，高位补指定值
  */
-function rightShift(value: number, shift: number, padding: 0 | 1): number {
-  const binaryString = value.toString(2).padStart(8, '0')
-  const shifted = ''.padStart(shift, padding === 0 ? '0' : '1') + binaryString.slice(0, binaryString.length - shift)
+function rightShift(value: number, shift: number, padding: 0 | 1, bitWidth: number): number {
+  const clampedShift = Math.min(shift, bitWidth)
+  const binaryString = value.toString(2).padStart(bitWidth, '0')
+  // Prepend `clampedShift` padding bits at high end, drop `clampedShift` low bits
+  const shifted = ''.padStart(clampedShift, padding === 0 ? '0' : '1') + binaryString.slice(0, bitWidth - clampedShift)
   return parseInt(shifted, 2)
 }

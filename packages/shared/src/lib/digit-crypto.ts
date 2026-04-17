@@ -13,15 +13,14 @@ export interface CryptoInput {
 
 export interface CryptoResult {
   originalNumber: string
-  digitEncrypted: string
-  globalEncrypted: string
+  /** 逐位操作后的中间结果 */
+  digitStepResult: string
+  /** 整体偏移后的最终结果（加密）或整体偏移前的中间结果（解密） */
+  globalStepResult: string
   finalResult: string
   decryptedResult: string
 }
 
-/**
- * 执行加密或解密
- */
 export function processDigitCrypto(input: CryptoInput): CryptoResult {
   const { number, digitKey, globalKey, operation } = input
 
@@ -29,40 +28,40 @@ export function processDigitCrypto(input: CryptoInput): CryptoResult {
     throw new Error('请输入有效的数字（只能包含 0-9）')
   }
 
-  if (operation === 'encrypt') {
-    return encrypt(number, digitKey, globalKey)
-  } else {
-    return decrypt(number, digitKey, globalKey)
-  }
+  return operation === 'encrypt'
+    ? encrypt(number, digitKey, globalKey)
+    : decrypt(number, digitKey, globalKey)
 }
 
 function encrypt(number: string, digitKey: number, globalKey: number): CryptoResult {
-  const originalNumber = number
+  // Step 1: digit-wise encrypt
+  const digitStepResult = digitWiseEncrypt(number, digitKey)
+  // Step 2: global offset
+  const globalStepResult = (parseInt(digitStepResult) + globalKey).toString()
+  const finalResult = globalStepResult
+  // Verify round-trip
+  const decryptedResult = decryptNumber(finalResult, number.length, digitKey, globalKey)
 
-  // 步骤一：逐位加密
-  const digitEncrypted = digitWiseEncrypt(number, digitKey)
-
-  // 步骤二：整体加密
-  const globalEncrypted = (parseInt(digitEncrypted) + globalKey).toString()
-  const finalResult = globalEncrypted
-
-  // 验证：解密结果应等于原始数字
-  const decryptedResult = decryptNumber(finalResult, digitKey, globalKey)
-
-  return { originalNumber, digitEncrypted, globalEncrypted, finalResult, decryptedResult }
+  return { originalNumber: number, digitStepResult, globalStepResult, finalResult, decryptedResult }
 }
 
 function decrypt(number: string, digitKey: number, globalKey: number): CryptoResult {
   const finalResult = number
-  const decryptedResult = decryptNumber(number, digitKey, globalKey)
-
-  // 展示解密步骤
-  const globalDecrypted = (parseInt(number) - globalKey).toString()
+  // Step 1 (reverse): undo global offset
+  const globalDecrypted = parseInt(number) - globalKey
+  if (globalDecrypted < 0) {
+    throw new Error('解密失败：整体偏移后数字为负，请检查密钥')
+  }
+  const globalStepResult = globalDecrypted.toString()
+  // Step 2 (reverse): undo digit-wise encrypt — pad to original length
+  const padded = globalStepResult.padStart(number.length, '0')
+  const digitStepResult = digitWiseDecrypt(padded, digitKey)
+  const decryptedResult = digitStepResult
 
   return {
     originalNumber: decryptedResult,
-    digitEncrypted: globalDecrypted,
-    globalEncrypted: globalDecrypted,
+    digitStepResult,
+    globalStepResult,
     finalResult,
     decryptedResult,
   }
@@ -82,10 +81,10 @@ function digitWiseDecrypt(number: string, key: number): string {
   }).join('')
 }
 
-/** 完整解密流程 */
-function decryptNumber(encrypted: string, digitKey: number, globalKey: number): string {
+/** 完整解密流程（用于加密时的验证） */
+function decryptNumber(encrypted: string, originalLength: number, digitKey: number, globalKey: number): string {
   const globalDecrypted = parseInt(encrypted) - globalKey
   if (globalDecrypted < 0) return '解密失败：数字过小'
-  const padded = globalDecrypted.toString().padStart(6, '0')
+  const padded = globalDecrypted.toString().padStart(originalLength, '0')
   return digitWiseDecrypt(padded, digitKey)
 }

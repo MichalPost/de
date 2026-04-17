@@ -1,7 +1,8 @@
 import { defineConfig, mergeConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { sharedViteConfig, resolve } from '../../vite.config.shared'
+import { resolve } from 'path'
+import { sharedViteConfig } from '../../vite.config.shared'
 
 export default defineConfig(
   mergeConfig(sharedViteConfig, {
