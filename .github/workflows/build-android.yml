@@ -38,6 +38,13 @@ jobs:
       - name: 安装依赖
         run: pnpm install
 
+      - name: 注入版本号
+        run: |
+          VERSION_CODE=${{ github.run_number }}
+          VERSION_NAME="$(date +'%Y.%-m%d').${{ github.run_number }}"
+          sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" apps/mobile/android/app/build.gradle
+          sed -i "s/versionName \".*\"/versionName \"$VERSION_NAME\"/" apps/mobile/android/app/build.gradle
+
       - name: 构建移动端 Web 资源
         run: pnpm build:mobile
 

@@ -61,6 +61,13 @@ jobs:
       - name: 安装依赖
         run: pnpm install
 
+      - name: 注入版本号
+        shell: bash
+        run: |
+          VERSION="$(date +'%Y.%-m%d').${{ github.run_number }}"
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" apps/desktop/src-tauri/tauri.conf.json
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" apps/desktop/src-tauri/Cargo.toml
+
       - name: 构建 Web 资源
         run: pnpm build:web
 
