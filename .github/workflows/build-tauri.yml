@@ -75,8 +75,10 @@ jobs:
       - name: 生成 Tauri 图标
         shell: bash
         run: |
+          cp apps/web/public/hero.png apps/desktop/hero.png
           cd apps/desktop
-          pnpm tauri icon "$GITHUB_WORKSPACE/apps/web/public/hero.png"
+          pnpm tauri icon hero.png
+          rm hero.png
 
       - name: 构建 Tauri 应用
         uses: tauri-apps/tauri-action@v0
