@@ -40,16 +40,6 @@ jobs:
         with:
           version: latest
 
-      - name: 缓存 pnpm store
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.local/share/pnpm/store
-            ~/Library/pnpm/store
-            ~\AppData\Local\pnpm\store
-          key: pnpm-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: pnpm-${{ runner.os }}-
-
       - name: 安装 Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -75,7 +65,7 @@ jobs:
         run: pnpm build:web
 
       - name: 生成 Tauri 图标
-        run: pnpm tauri icon apps/web/public/hero.png
+        run: pnpm tauri icon ../../apps/web/public/hero.png
         working-directory: apps/desktop
 
       - name: 构建 Tauri 应用
@@ -84,11 +74,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: apps/desktop
-          args: -- --no-before-build-command
+          args: --no-before-build-command
 
-      - name: 上传构建产物
+      - name: 上传构建产物（Artifacts）
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}
           path: ${{ matrix.artifact-path }}
           retention-days: 7
+
+      - name: 发布到 Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: 构建 #${{ github.run_number }}
+          body: |
+            自动构建
+            提交: ${{ github.sha }}
+          files: ${{ matrix.artifact-path }}

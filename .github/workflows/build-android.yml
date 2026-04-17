@@ -3,8 +3,6 @@ name: 构建 Android APK
 on:
   push:
     branches: [main, master]
-  pull_request:
-    branches: [main, master]
   workflow_dispatch:
 
 env:
@@ -28,13 +26,6 @@ jobs:
         with:
           version: latest
 
-      - name: 缓存 pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/share/pnpm/store
-          key: pnpm-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: pnpm-${{ runner.os }}-
-
       - name: 配置 Java
         uses: actions/setup-java@v4
         with:
@@ -43,15 +34,6 @@ jobs:
 
       - name: 配置 Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: 缓存 Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('apps/mobile/android/**/*.gradle*') }}
-          restore-keys: gradle-
 
       - name: 安装依赖
         run: pnpm install
@@ -71,9 +53,12 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
         working-directory: apps/mobile/android
 
-      - name: 上传 APK
-        uses: actions/upload-artifact@v4
+      - name: 发布到 Releases
+        uses: softprops/action-gh-release@v2
         with:
-          name: app-debug
-          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 7
+          tag_name: build-${{ github.run_number }}
+          name: 构建 #${{ github.run_number }}
+          body: |
+            自动构建
+            提交: ${{ github.sha }}
+          files: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk

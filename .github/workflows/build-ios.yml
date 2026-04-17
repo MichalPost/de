@@ -28,13 +28,6 @@ jobs:
         with:
           version: latest
 
-      - name: 缓存 pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/Library/pnpm/store
-          key: pnpm-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: pnpm-${{ runner.os }}-
-
       - name: 安装依赖
         run: pnpm install
 
@@ -69,9 +62,17 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: 上传模拟器构建产物
-        uses: actions/upload-artifact@v4
+      - name: 打包模拟器产物为 zip
+        run: |
+          cd apps/mobile/ios/build/Build/Products/Debug-iphonesimulator
+          zip -r App-ios-simulator.zip App.app
+
+      - name: 发布到 Releases
+        uses: softprops/action-gh-release@v2
         with:
-          name: ios-simulator-build
-          path: apps/mobile/ios/build/Build/Products/Debug-iphonesimulator/App.app
-          retention-days: 7
+          tag_name: build-${{ github.run_number }}
+          name: 构建 #${{ github.run_number }}
+          body: |
+            自动构建
+            提交: ${{ github.sha }}
+          files: apps/mobile/ios/build/Build/Products/Debug-iphonesimulator/App-ios-simulator.zip
