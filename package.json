@@ -1,0 +1,18 @@
+{
+  "name": "chemtools-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @chemtools/web dev",
+    "dev:mobile": "pnpm --filter @chemtools/mobile dev",
+    "build:web": "pnpm --filter @chemtools/web build",
+    "build:mobile": "pnpm --filter @chemtools/mobile build",
+    "build:shared": "pnpm --filter @chemtools/shared build",
+    "build:all": "pnpm build:shared && pnpm build:web && pnpm build:mobile",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2"
+  }
+}

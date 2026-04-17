@@ -1,0 +1,418 @@
+@import "tailwindcss";
+@source "../../../apps/web/src";
+@source ".";
+
+/* ── Tailwind v4 theme tokens ─────────────────────────────────────────────
+   Map our CSS variables to Tailwind utility classes using ct- prefix
+   to avoid conflicts with Tailwind's built-in color tokens.
+   Usage: bg-ct-card, text-ct-primary, border-ct-accent, etc.
+   ──────────────────────────────────────────────────────────────────────── */
+@theme inline {
+  --color-ct-bg-app:       var(--bg-app);
+  --color-ct-bg-card:      var(--bg-card);
+  --color-ct-bg-input:     var(--bg-input);
+  --color-ct-bg-hover:     var(--bg-hover);
+  --color-ct-bg-sidebar:   var(--bg-sidebar);
+  --color-ct-bg-header:    var(--bg-header);
+  --color-ct-bg-subtle:    var(--bg-subtle);
+
+  --color-ct-border:       var(--border);
+  --color-ct-border-input: var(--border-input);
+
+  --color-ct-text-primary:   var(--text-primary);
+  --color-ct-text-secondary: var(--text-secondary);
+  --color-ct-text-muted:     var(--text-muted);
+  --color-ct-text-faint:     var(--text-faint);
+
+  --color-ct-accent:         var(--accent);
+  --color-ct-accent-hover:   var(--accent-hover);
+  --color-ct-accent-light:   var(--accent-light);
+  --color-ct-accent-border:  var(--accent-border);
+  --color-ct-accent-text:    var(--accent-text);
+
+  --color-ct-success:        var(--success);
+  --color-ct-success-light:  var(--success-light);
+  --color-ct-success-border: var(--success-border);
+  --color-ct-success-text:   var(--success-text);
+
+  --color-ct-warning:        var(--warning);
+  --color-ct-warning-light:  var(--warning-light);
+  --color-ct-warning-text:   var(--warning-text);
+
+  --color-ct-purple:         var(--purple);
+  --color-ct-purple-light:   var(--purple-light);
+  --color-ct-purple-text:    var(--purple-text);
+
+  --color-ct-cyan:           var(--cyan);
+  --color-ct-cyan-light:     var(--cyan-light);
+  --color-ct-cyan-text:      var(--cyan-text);
+
+  --color-ct-error:          var(--error);
+  --color-ct-error-light:    var(--error-light);
+  --color-ct-error-border:   var(--error-border);
+  --color-ct-error-text:     var(--error-text);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THEME VARIABLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Light (default) ───────────────────────────────────────────────────── */
+:root,
+[data-theme="light"] {
+  /* Layout */
+  --bg-app:           #F4F5F7;
+  --bg-sidebar:       #FFFFFF;
+  --bg-header:        #FFFFFF;
+  --bg-card:          #FFFFFF;
+  --bg-input:         #F7F8FA;
+  --bg-hover:         #F0F1F5;
+  --bg-active:        #EEEEFF;
+  --bg-subtle:        #FAFAFA;
+
+  /* Borders */
+  --border:           #E5E7EB;
+  --border-subtle:    #F0F1F5;
+  --border-input:     #E5E7EB;
+
+  /* Text */
+  --text-primary:     #111827;
+  --text-secondary:   #4B5563;
+  --text-muted:       #9CA3AF;
+  --text-faint:       #C4C9D4;
+
+  /* Accent (indigo/purple) */
+  --accent:           #635BFF;
+  --accent-hover:     #4F46E5;
+  --accent-light:     #EEEEFF;
+  --accent-border:    #C7D2FE;
+  --accent-text:      #635BFF;
+
+  /* Success (green) */
+  --success:          #10B981;
+  --success-hover:    #059669;
+  --success-light:    #ECFDF5;
+  --success-border:   #A7F3D0;
+  --success-text:     #10B981;
+
+  /* Warning (amber) */
+  --warning:          #F59E0B;
+  --warning-light:    #FFF7ED;
+  --warning-text:     #F59E0B;
+
+  /* Purple */
+  --purple:           #A855F7;
+  --purple-hover:     #9333EA;
+  --purple-light:     #FDF4FF;
+  --purple-text:      #A855F7;
+
+  /* Cyan */
+  --cyan:             #06B6D4;
+  --cyan-light:       #ECFEFF;
+  --cyan-text:        #06B6D4;
+
+  /* Error */
+  --error:            #EF4444;
+  --error-light:      #FEF2F2;
+  --error-border:     #FECACA;
+  --error-text:       #EF4444;
+
+  /* Barcode text */
+  --barcode-text:     #46362b;
+
+  /* Shadows */
+  --shadow-sm:        0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:        0 4px 16px rgba(0,0,0,.10);
+  --shadow-card:      0 1px 3px rgba(0,0,0,.04);
+
+  /* Glass */
+  --glass-bg:         rgba(255,255,255,0.7);
+  --glass-border:     rgba(255,255,255,0.5);
+  --glass-blur:       blur(12px);
+}
+
+/* ─── Dark ──────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-app:           #0F1117;
+  --bg-sidebar:       #161B27;
+  --bg-header:        #161B27;
+  --bg-card:          #1E2433;
+  --bg-input:         #252D3D;
+  --bg-hover:         #252D3D;
+  --bg-active:        #2A2F5A;
+  --bg-subtle:        #1A2030;
+
+  --border:           #2A3147;
+  --border-subtle:    #1E2433;
+  --border-input:     #2A3147;
+
+  --text-primary:     #F0F2FF;
+  --text-secondary:   #A0AABF;
+  --text-muted:       #8892B0;
+  --text-faint:       #5A6480;
+
+  --accent:           #7C74FF;
+  --accent-hover:     #6B63EE;
+  --accent-light:     #2A2F5A;
+  --accent-border:    #3D3F7A;
+  --accent-text:      #A89FFF;
+
+  --success:          #34D399;
+  --success-hover:    #10B981;
+  --success-light:    #0D2E22;
+  --success-border:   #1A4A35;
+  --success-text:     #34D399;
+
+  --warning:          #FBBF24;
+  --warning-light:    #2A1F0A;
+  --warning-text:     #FBBF24;
+
+  --purple:           #C084FC;
+  --purple-hover:     #A855F7;
+  --purple-light:     #2A1040;
+  --purple-text:      #C084FC;
+
+  --cyan:             #22D3EE;
+  --cyan-light:       #0A2030;
+  --cyan-text:        #22D3EE;
+
+  --error:            #F87171;
+  --error-light:      #2A0F0F;
+  --error-border:     #4A1A1A;
+  --error-text:       #F87171;
+
+  --barcode-text:     #C4A882;
+
+  --shadow-sm:        0 1px 3px rgba(0,0,0,.4);
+  --shadow-md:        0 4px 24px rgba(0,0,0,.5);
+  --shadow-card:      0 1px 4px rgba(0,0,0,.3);
+
+  --glass-bg:         rgba(22,27,39,0.75);
+  --glass-border:     rgba(255,255,255,0.07);
+  --glass-blur:       blur(16px);
+}
+
+/* ─── Glass (Glassmorphism + Mesh Gradient) ─────────────────────────────── */
+[data-theme="glass"] {
+  --bg-app:           #C9D6FF;
+  --bg-sidebar:       rgba(255,255,255,0.55);
+  --bg-header:        rgba(255,255,255,0.55);
+  --bg-card:          rgba(255,255,255,0.45);
+  --bg-input:         rgba(255,255,255,0.6);
+  --bg-hover:         rgba(255,255,255,0.35);
+  --bg-active:        rgba(120,100,255,0.18);
+  --bg-subtle:        rgba(255,255,255,0.3);
+
+  --border:           rgba(255,255,255,0.45);
+  --border-subtle:    rgba(255,255,255,0.25);
+  --border-input:     rgba(200,200,255,0.4);
+
+  --text-primary:     #1A1A3E;
+  --text-secondary:   #3D3D6B;
+  --text-muted:       #7B7BAA;
+  --text-faint:       #ABABCC;
+
+  --accent:           #635BFF;
+  --accent-hover:     #4F46E5;
+  --accent-light:     rgba(99,91,255,0.15);
+  --accent-border:    rgba(99,91,255,0.3);
+  --accent-text:      #635BFF;
+
+  --success:          #10B981;
+  --success-hover:    #059669;
+  --success-light:    rgba(16,185,129,0.12);
+  --success-border:   rgba(16,185,129,0.3);
+  --success-text:     #059669;
+
+  --warning:          #D97706;
+  --warning-light:    rgba(245,158,11,0.12);
+  --warning-text:     #D97706;
+
+  --purple:           #9333EA;
+  --purple-hover:     #7C3AED;
+  --purple-light:     rgba(168,85,247,0.12);
+  --purple-text:      #9333EA;
+
+  --cyan:             #0891B2;
+  --cyan-light:       rgba(6,182,212,0.12);
+  --cyan-text:        #0891B2;
+
+  --error:            #DC2626;
+  --error-light:      rgba(239,68,68,0.1);
+  --error-border:     rgba(239,68,68,0.3);
+  --error-text:       #DC2626;
+
+  --barcode-text:     #3D2B1F;
+
+  --shadow-sm:        0 2px 8px rgba(99,91,255,.12);
+  --shadow-md:        0 8px 32px rgba(99,91,255,.18);
+  --shadow-card:      0 2px 12px rgba(99,91,255,.1);
+
+  --glass-bg:         rgba(255,255,255,0.45);
+  --glass-border:     rgba(255,255,255,0.55);
+  --glass-blur:       blur(20px);
+}
+
+[data-theme="glass"] body,
+[data-theme="glass"] #root {
+  background: linear-gradient(135deg, #C9D6FF 0%, #E2E2F0 30%, #FFE4E1 60%, #C9D6FF 100%);
+  background-attachment: fixed;
+}
+
+/* ─── Neon (Dark + Electric Accents) ────────────────────────────────────── */
+[data-theme="neon"] {
+  --bg-app:           #07080F;
+  --bg-sidebar:       #0D0E1A;
+  --bg-header:        #0D0E1A;
+  --bg-card:          #111220;
+  --bg-input:         #0D0E1A;
+  --bg-hover:         #181929;
+  --bg-active:        #1A1040;
+  --bg-subtle:        #0A0B15;
+
+  --border:           #1E1F35;
+  --border-subtle:    #141525;
+  --border-input:     #252640;
+
+  --text-primary:     #E8EAFF;
+  --text-secondary:   #8890C0;
+  --text-muted:       #7080B0;
+  --text-faint:       #454870;
+
+  --accent:           #7B5CFF;
+  --accent-hover:     #6A4AEE;
+  --accent-light:     #1A1040;
+  --accent-border:    #3A2880;
+  --accent-text:      #A78BFF;
+
+  --success:          #39FF14;
+  --success-hover:    #2ECC10;
+  --success-light:    #0A1F08;
+  --success-border:   #1A3A10;
+  --success-text:     #39FF14;
+
+  --warning:          #FFB800;
+  --warning-light:    #1F1500;
+  --warning-text:     #FFB800;
+
+  --purple:           #D946EF;
+  --purple-hover:     #C026D3;
+  --purple-light:     #1A0520;
+  --purple-text:      #E879F9;
+
+  --cyan:             #00E5FF;
+  --cyan-light:       #001A20;
+  --cyan-text:        #00E5FF;
+
+  --error:            #FF4444;
+  --error-light:      #1F0808;
+  --error-border:     #3F1010;
+  --error-text:       #FF6B6B;
+
+  --barcode-text:     #A89060;
+
+  --shadow-sm:        0 1px 4px rgba(123,92,255,.2);
+  --shadow-md:        0 4px 24px rgba(123,92,255,.35);
+  --shadow-card:      0 2px 8px rgba(123,92,255,.15);
+
+  --glass-bg:         rgba(13,14,26,0.8);
+  --glass-border:     rgba(123,92,255,0.2);
+  --glass-blur:       blur(16px);
+}
+
+[data-theme="neon"] body,
+[data-theme="neon"] #root {
+  background: radial-gradient(ellipse at 20% 50%, rgba(123,92,255,.15) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(0,229,255,.08) 0%, transparent 50%),
+              #07080F;
+  background-attachment: fixed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MINIMAL OVERRIDES — only what @theme tokens cannot cover
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* bg-white → card background (Tailwind resets white to literal white) */
+.bg-white { background-color: var(--bg-card) !important; }
+.hover\:bg-white:hover { background-color: var(--bg-card) !important; }
+
+/* Error classes (standard Tailwind names, not arbitrary values) */
+.text-red-500,
+.text-red-400,
+.text-red-600 { color: var(--error-text) !important; }
+.bg-red-50    { background-color: var(--error-light) !important; }
+.border-red-200,
+.border-red-300,
+.border-red-400 { border-color: var(--error-border) !important; }
+.hover\:text-red-400:hover { color: var(--error-text) !important; }
+.focus\:border-red-400:focus,
+.focus\:border-red-500:focus { border-color: var(--error) !important; }
+
+/* ── Neon active nav glow ── */
+[data-theme="neon"] .nav-active {
+  box-shadow: 0 0 12px rgba(123,92,255,.5), inset 0 0 12px rgba(123,92,255,.1);
+}
+
+/* ── Glass card utility ── */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Body color follows theme ── */
+html {
+  color: var(--text-primary);
+  background-color: var(--bg-app);
+}
+
+body {
+  color: var(--text-primary);
+  background-color: var(--bg-app);
+}
+
+/* ── Form elements: force theme colors with !important ── */
+input,
+textarea,
+select {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-input) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-faint) !important;
+  opacity: 1;
+}
+
+/* ── Buttons inherit from parent (theme color set via inline style) ── */
+button {
+  color: inherit;
+}
+
+/* ── Smooth theme transition (exclude inputs to avoid color flash) ── */
+*:not(input):not(textarea):not(select),
+*:not(input):not(textarea):not(select)::before,
+*:not(input):not(textarea):not(select)::after {
+  transition: background-color 0.25s ease, border-color 0.25s ease,
+              color 0.15s ease, box-shadow 0.25s ease;
+}
+
+/* Exclude transitions on animated elements to avoid jank */
+svg, img, canvas { transition: none !important; }
+
+@media print {
+  .print\:hidden { display: none !important; }
+}
