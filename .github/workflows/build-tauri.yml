@@ -73,9 +73,10 @@ jobs:
         run: pnpm build:web
 
       - name: 生成 Tauri 图标
-        working-directory: apps/desktop
         shell: bash
-        run: pnpm tauri icon ../../apps/web/public/hero.png
+        run: |
+          cd apps/desktop
+          pnpm tauri icon "$GITHUB_WORKSPACE/apps/web/public/hero.png"
 
       - name: 构建 Tauri 应用
         uses: tauri-apps/tauri-action@v0
