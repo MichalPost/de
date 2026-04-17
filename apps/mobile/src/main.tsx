@@ -8,6 +8,31 @@ import '@chemtools/shared/styles.css'
 // Restore theme before first paint to avoid flash
 initTheme()
 
+// Polyfill navigator.clipboard.writeText for Android WebView
+// (Capacitor WebView doesn't support the Clipboard API)
+if (!navigator.clipboard || !navigator.clipboard.writeText) {
+  Object.defineProperty(navigator, 'clipboard', {
+    value: {
+      writeText: async (text: string) => {
+        const { Clipboard } = await import('@capacitor/clipboard')
+        await Clipboard.write({ string: text })
+      },
+      write: async () => { throw new Error('clipboard.write not supported on mobile') },
+    },
+    writable: true,
+  })
+} else {
+  const _writeText = navigator.clipboard.writeText.bind(navigator.clipboard)
+  navigator.clipboard.writeText = async (text: string) => {
+    try {
+      await _writeText(text)
+    } catch {
+      const { Clipboard } = await import('@capacitor/clipboard')
+      await Clipboard.write({ string: text })
+    }
+  }
+}
+
 // One-time migration: move old reagent_templates key into zustand persist key
 ;(function migrateTemplates() {
   const OLD_KEY = 'reagent_templates'

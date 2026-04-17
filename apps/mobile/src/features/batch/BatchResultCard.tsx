@@ -1,7 +1,7 @@
 import type { BatchGeneratedRecord } from './types'
 import { CopyButton, useCopyAsync } from '@chemtools/shared/ui/CopyButton'
-import { copyBarcodeAsPng } from '@chemtools/shared/lib/copyImage'
-import { barcodeToPngDataUrl, downloadBarcodePng } from '@chemtools/shared/lib/barcode'
+import { copyBarcodeAsPng, downloadBarcodePng } from '../../lib/capacitorUtils'
+import { barcodeToPngDataUrl } from '@chemtools/shared/lib/barcode'
 import { motion } from 'motion/react'
 import { ImgIcon, CheckIcon } from '@chemtools/shared/ui/icons'
 

@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
+    "sync:brand-assets": "node scripts/sync-brand-assets.mjs",
     "dev:web": "pnpm --filter @chemtools/web dev",
     "dev:mobile": "pnpm --filter @chemtools/mobile dev",
     "build:web": "pnpm --filter @chemtools/web build",

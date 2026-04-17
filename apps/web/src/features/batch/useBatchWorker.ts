@@ -1,38 +1,8 @@
-import { wrap } from 'comlink'
-import { useRef, useEffect } from 'react'
-import type { Remote } from 'comlink'
+import { useBatchWorker as _useBatchWorker } from '@chemtools/shared/features/batch/useBatchWorker'
+export type { BatchWorkerApi } from '@chemtools/shared/features/batch/useBatchWorker'
 
-type BatchWorkerApi = {
-  buildBatchCodes: (
-    template: import('./types').TemplateDefinition,
-    input: {
-      reagentIds: number[]
-      agentIdOverride?: number
-      customerIdOverride?: number
-      validUsesOverride?: number
-    },
-    opts?: { generateSvg?: boolean },
-  ) => Promise<import('./types').BatchGeneratedRecord[]>
-  parseReagentIds: (raw: string) => Promise<number[]>
-}
+const WORKER_URL = new URL('./batchWorker.ts', import.meta.url)
 
-export function useBatchWorker(): Remote<BatchWorkerApi> {
-  const workerRef = useRef<Worker | null>(null)
-  const apiRef = useRef<Remote<BatchWorkerApi> | null>(null)
-
-  if (!workerRef.current) {
-    workerRef.current = new Worker(
-      new URL('./batchWorker.ts', import.meta.url),
-      { type: 'module' },
-    )
-    apiRef.current = wrap<BatchWorkerApi>(workerRef.current)
-  }
-
-  useEffect(() => {
-    return () => {
-      workerRef.current?.terminate()
-    }
-  }, [])
-
-  return apiRef.current!
+export function useBatchWorker() {
+  return _useBatchWorker(WORKER_URL)
 }

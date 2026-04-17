@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node ../../scripts/sync-brand-assets.mjs mobile",
     "dev": "vite",
+    "prebuild": "node ../../scripts/sync-brand-assets.mjs mobile",
     "build": "tsc -b && vite build",
     "build:mobile": "pnpm build && pnpm cap:sync",
     "lint": "eslint .",

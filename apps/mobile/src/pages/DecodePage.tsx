@@ -76,7 +76,9 @@ export function DecodePage() {
     setScanHint(null)
     setError(null)
     try {
-      const results = await scanBarcodeFile(files[0])
+      // Read into memory immediately to avoid Android permission expiry on File objects
+      const blob = new Blob([await files[0].arrayBuffer()], { type: files[0].type || 'image/jpeg' })
+      const results = await scanBarcodeFile(blob)
       if (results.length === 0) {
         setError('未识别到条码，请确保图片清晰且包含 Code128 条码')
         return

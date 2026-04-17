@@ -31,16 +31,25 @@ export function ScanBatchPage() {
     setProgress({ done: 0, total: files.length })
     const newRecords: ScanRecord[] = []
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const previewUrl = URL.createObjectURL(file)
+    // Read all files into memory immediately before any async work,
+    // because Android revokes File access permissions after the first await.
+    const fileData = await Promise.all(
+      files.map(async (file) => ({
+        name: file.name,
+        blob: new Blob([await file.arrayBuffer()], { type: file.type || 'image/jpeg' }),
+        previewUrl: URL.createObjectURL(file),
+      }))
+    )
+
+    for (let i = 0; i < fileData.length; i++) {
+      const { name, blob, previewUrl } = fileData[i]
       previewUrlsRef.current.add(previewUrl)
       const id = `${Date.now()}-${i}`
 
       try {
-        const results = await scanBarcodeFile(file)
+        const results = await scanBarcodeFile(blob)
         if (results.length === 0) {
-          newRecords.push({ id, filename: file.name, previewUrl, status: 'error', barcodeText: '', barcodeKind: 'unknown', decoded: null, error: '未识别到条码' })
+          newRecords.push({ id, filename: name, previewUrl, status: 'error', barcodeText: '', barcodeKind: 'unknown', decoded: null, error: '未识别到条码' })
         } else {
           results.forEach((r, ri) => {
             const clean = cleanBarcodeText(r.text)
@@ -53,7 +62,7 @@ export function ScanBatchPage() {
             }
             newRecords.push({
               id: `${id}-${ri}`,
-              filename: results.length > 1 ? `${file.name} #${ri + 1}` : file.name,
+              filename: results.length > 1 ? `${name} #${ri + 1}` : name,
               previewUrl,
               status: decodeError ? 'error' : 'ok',
               barcodeText: clean,
@@ -64,9 +73,9 @@ export function ScanBatchPage() {
           })
         }
       } catch (e) {
-        newRecords.push({ id, filename: file.name, previewUrl, status: 'error', barcodeText: '', barcodeKind: 'unknown', decoded: null, error: (e as Error).message })
+        newRecords.push({ id, filename: name, previewUrl, status: 'error', barcodeText: '', barcodeKind: 'unknown', decoded: null, error: (e as Error).message })
       }
-      setProgress({ done: i + 1, total: files.length })
+      setProgress({ done: i + 1, total: fileData.length })
     }
 
     setRecords(prev => [...newRecords, ...prev])
