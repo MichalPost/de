@@ -1,8 +1,6 @@
 import { renderBarcodeToCanvas } from '@chemtools/shared/lib/barcode'
 import type { BatchGeneratedRecord } from './types'
 
-// To avoid large memory spikes, cap how many "layout pages" we merge into one PNG.
-// When total pages exceed this, export multiple PNG files with page-range suffix.
 export const MAX_PAGES_PER_PNG = 8
 
 // ─── Layout engine ────────────────────────────────────────────────────────────
@@ -12,7 +10,6 @@ interface RenderOptions {
   globalMode?: 'long' | 'short' | 'both'
   cols: number
   perPage: number
-  /** px per module. Higher = sharper. Default 3 */
   moduleWidth?: number
   shortModuleWidth?: number
   barcodeHeight?: number
@@ -118,10 +115,42 @@ function mergeCanvases(pages: HTMLCanvasElement[]): HTMLCanvasElement {
 }
 
 function addPngSuffix(filename: string, suffix: string) {
-  // Only append suffix before extension when filename ends with ".png" (case-insensitive).
   const lower = filename.toLowerCase()
   if (lower.endsWith('.png')) return `${filename.slice(0, -4)}${suffix}.png`
   return `${filename}${suffix}`
+}
+
+/** Convert blob to base64 string (without data: prefix) */
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      // strip "data:...;base64," prefix
+      resolve(result.split(',')[1])
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+/** Save a blob to device storage via Capacitor and share/open it */
+async function saveAndShareBlob(blob: Blob, filename: string): Promise<void> {
+  const { Filesystem, Directory } = await import('@capacitor/filesystem')
+  const { Share } = await import('@capacitor/share')
+
+  const base64 = await blobToBase64(blob)
+  const result = await Filesystem.writeFile({
+    path: filename,
+    data: base64,
+    directory: Directory.Cache,
+  })
+
+  await Share.share({
+    title: filename,
+    url: result.uri,
+    dialogTitle: '保存或分享文件',
+  })
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -136,28 +165,20 @@ export async function exportResultsAsPng(
   const totalPages = Math.max(1, Math.ceil(records.length / perPage))
   const shouldSplit = totalPages > MAX_PAGES_PER_PNG
 
-  // Export as a single PNG.
   if (!shouldSplit) {
     const pages = renderPagesAsCanvases({ records, globalMode, cols, perPage })
     const merged = mergeCanvases(pages)
     const blob = await new Promise<Blob>((res, rej) =>
       merged.toBlob(b => b ? res(b) : rej(new Error('toBlob failed')), 'image/png')
     )
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.click()
-    window.setTimeout(() => URL.revokeObjectURL(url), 5000)
+    await saveAndShareBlob(blob, filename)
     return
   }
 
-  // Export multiple PNGs, each merges up to MAX_PAGES_PER_PNG layout pages.
   const numChunks = Math.ceil(totalPages / MAX_PAGES_PER_PNG)
   for (let chunkIndex = 0; chunkIndex < numChunks; chunkIndex++) {
-    const startPage = chunkIndex * MAX_PAGES_PER_PNG // 0-based
-    const endPageExclusive = Math.min(totalPages, startPage + MAX_PAGES_PER_PNG) // 0-based, exclusive
-
+    const startPage = chunkIndex * MAX_PAGES_PER_PNG
+    const endPageExclusive = Math.min(totalPages, startPage + MAX_PAGES_PER_PNG)
     const startRecord = startPage * perPage
     const endRecord = Math.min(records.length, endPageExclusive * perPage)
     const chunkRecords = records.slice(startRecord, endRecord)
@@ -167,17 +188,12 @@ export async function exportResultsAsPng(
     const blob = await new Promise<Blob>((res, rej) =>
       merged.toBlob(b => b ? res(b) : rej(new Error('toBlob failed')), 'image/png')
     )
-
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
     const outName = addPngSuffix(filename, `_p${startPage + 1}-${endPageExclusive}`)
-    a.download = outName
-    a.click()
-    window.setTimeout(() => URL.revokeObjectURL(url), 5000)
+    await saveAndShareBlob(blob, outName)
   }
 }
 
+/** 复制图片：Android 不支持 Clipboard API，改用系统分享 */
 export async function copyResultsAsImage(
   records: BatchGeneratedRecord[],
   globalMode: 'long' | 'short' | 'both' | undefined,
@@ -189,10 +205,10 @@ export async function copyResultsAsImage(
   const blob = await new Promise<Blob>((res, rej) =>
     merged.toBlob(b => b ? res(b) : rej(new Error('toBlob failed')), 'image/png')
   )
-  await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+  await saveAndShareBlob(blob, `条码_${Date.now()}.png`)
 }
 
-/** PDF export using @react-pdf/renderer —?true vector, small file size */
+/** PDF 导出：通过 Capacitor Filesystem + Share 保存到设备 */
 export async function exportResultsAsPdf(
   records: BatchGeneratedRecord[],
   globalMode: 'long' | 'short' | 'both' | undefined,
@@ -208,10 +224,6 @@ export async function exportResultsAsPdf(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const blob = await pdf(doc as any).toBlob()
 
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `批量生成_${templateName}_${new Date().toISOString().slice(0, 10)}.pdf`
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 5000)
+  const filename = `批量生成_${templateName}_${new Date().toISOString().slice(0, 10)}.pdf`
+  await saveAndShareBlob(blob, filename)
 }
