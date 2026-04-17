@@ -72,7 +72,9 @@ jobs:
         run: pnpm build:web
 
       - name: 生成 Tauri 图标
-        run: pnpm --filter @chemtools/desktop tauri icon ${{ github.workspace }}/apps/web/public/hero.png
+        working-directory: apps/desktop
+        shell: bash
+        run: cargo tauri icon ../../apps/web/public/hero.png
 
       - name: 构建 Tauri 应用
         uses: tauri-apps/tauri-action@v0
