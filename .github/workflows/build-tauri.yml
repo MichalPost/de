@@ -76,8 +76,8 @@ jobs:
         shell: bash
         run: |
           cd apps/desktop
-          test -f ../../assets/brand/hero.png
-          pnpm tauri icon ../../assets/brand/hero.png
+          test -f ../../assets/brand/public/favicon.svg
+          pnpm tauri icon ../../assets/brand/public/favicon.svg
 
       - name: 构建 Tauri 应用
         uses: tauri-apps/tauri-action@v0
