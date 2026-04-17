@@ -1,24 +1,28 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { CodeIcon, ScanIcon, LockIcon, LayersIcon, ChevronRightIcon, MenuIcon, CameraIcon, SettingsIcon } from './icons'
+import { CodeIcon, ScanIcon, LockIcon, LayersIcon, ChevronRightIcon, MenuIcon, CameraIcon, SettingsIcon, BinaryIcon, ShieldCheckIcon } from './icons'
 import { ThemeSwitcher } from './ThemeSwitcher'
 
 const navItems = [
-  { to: '/encode', label: '试剂包生成', icon: CodeIcon },
-  { to: '/decode', label: '长码解包',   icon: ScanIcon },
-  { to: '/scan',   label: '图片识别',   icon: CameraIcon },
-  { to: '/crypto', label: '3DES 加密',  icon: LockIcon },
-  { to: '/batch',  label: '批量生成器', icon: LayersIcon },
+  { to: '/encode',       label: '试剂包生成',   icon: CodeIcon },
+  { to: '/decode',       label: '长码解包',     icon: ScanIcon },
+  { to: '/scan',         label: '图片识别',     icon: CameraIcon },
+  { to: '/crypto',       label: '3DES 加密',    icon: LockIcon },
+  { to: '/batch',        label: '批量生成器',   icon: LayersIcon },
+  { to: '/bit-shift',    label: '进制位移',     icon: BinaryIcon },
+  { to: '/digit-crypto', label: '数字加密解密', icon: ShieldCheckIcon },
 ]
 
 const breadcrumbMap: Record<string, string> = {
-  '/encode': '试剂包生成',
-  '/decode': '长码解包',
-  '/scan':   '图片识别',
-  '/crypto': '3DES 加密',
-  '/batch':  '批量生成器',
-  '/settings': '设置',
+  '/encode':       '试剂包生成',
+  '/decode':       '长码解包',
+  '/scan':         '图片识别',
+  '/crypto':       '3DES 加密',
+  '/batch':        '批量生成器',
+  '/bit-shift':    '进制位移计算器',
+  '/digit-crypto': '数字加密解密器',
+  '/settings':     '设置',
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {

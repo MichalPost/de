@@ -4,8 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "icon": "tauri icon ../../assets/brand/public/favicon.svg",
+    "predev": "pnpm icon",
     "dev": "tauri dev",
+    "prebuild": "pnpm icon",
     "build": "tauri build",
+    "pretauri": "pnpm icon",
     "tauri": "tauri"
   },
   "devDependencies": {

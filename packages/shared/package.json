@@ -8,7 +8,12 @@
     "./ui/*": "./src/ui/*",
     "./store/*": "./src/store/*",
     "./features/*": "./src/features/*",
+    "./pages/*": "./src/pages/*",
     "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {},
   "peerDependencies": {
@@ -16,8 +21,11 @@
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "typescript": "~6.0.2"
+    "jsdom": "^29.0.2",
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.4"
   }
 }

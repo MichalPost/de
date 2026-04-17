@@ -18,18 +18,8 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 配置 Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: 配置 pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
-
-      - name: 安装依赖
-        run: pnpm install
+      - name: 配置 Node.js & pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: 生成版本号
         run: echo "VERSION=$(date +'%Y.%-m%d').${{ github.run_number }}" >> $GITHUB_ENV

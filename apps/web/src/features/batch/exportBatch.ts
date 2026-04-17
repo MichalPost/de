@@ -205,8 +205,7 @@ export async function exportResultsAsPdf(
   const { BatchPdfDocument } = await import('./BatchPdfDocument')
 
   const doc = createElement(BatchPdfDocument, { records, globalMode, cols, perPage })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const blob = await pdf(doc as any).toBlob()
+  const blob = await pdf(doc).toBlob()
 
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

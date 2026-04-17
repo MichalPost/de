@@ -51,8 +51,6 @@
     "@capacitor/cli": "^8.3.1",
     "@eslint/js": "^9.39.4",
     "@tailwindcss/postcss": "^4.2.2",
-    "@tauri-apps/api": "^2.10.1",
-    "@tauri-apps/cli": "^2.10.1",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
