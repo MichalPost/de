@@ -97,7 +97,7 @@ async function tauriExportBatchAsPng(
 }
 
 /** Render a React-PDF document element to a PDF file via save dialog. */
-async function savePdfDocument(doc: React.ReactElement): Promise<void> {
+async function savePdfDocument(doc: React.ReactElement<import('@react-pdf/renderer').DocumentProps>): Promise<void> {
   const { pdf } = await getReactPdf()
   const blob = await pdf(doc).toBlob()
   const filename = `${formatFileTimestamp()}.pdf`

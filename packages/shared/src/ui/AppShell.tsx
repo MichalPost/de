@@ -74,9 +74,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-2.5 py-3 flex flex-col gap-0.5">
+        <nav className="flex-1 py-3 flex flex-col gap-0.5">
           <p
-            className="px-2.5 py-1 text-[10px] font-semibold tracking-widest uppercase"
+            className="px-5 py-1 text-[10px] font-semibold tracking-widest uppercase"
             style={{ color: 'var(--text-muted)' }}
           >
             工具
@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               key={to}
               to={to}
               onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) => `flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-[13px] transition-all duration-150${isActive ? ' nav-active' : ''}`}
+              className={({ isActive }) => `flex items-center gap-2.5 py-2 pl-5 pr-2.5 rounded-lg text-[13px] transition-colors duration-150${isActive ? ' nav-active' : ''}`}
               style={({ isActive }) => ({
                 backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
                 color: isActive ? 'var(--accent-text)' : 'var(--text-secondary)',
@@ -101,7 +101,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 if (!el.classList.contains('nav-active')) el.style.backgroundColor = 'transparent'
               }}
             >
-              {({ isActive }) => (
+              {({ isActive: _isActive }) => (
                 <>
                   <Icon className="w-4 h-4 shrink-0 opacity-70" />
                   {label}
@@ -112,11 +112,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Footer */}
-        <div className="px-2.5 py-3 border-t" style={{ borderColor: 'var(--border)' }}>
+        <div className="py-3 border-t" style={{ borderColor: 'var(--border)' }}>
           <NavLink
             to="/settings"
             onClick={() => setSidebarOpen(false)}
-            className={({ isActive }) => `flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-[13px] transition-all duration-150${isActive ? ' nav-active' : ''}`}
+            className={({ isActive }) => `flex items-center gap-2.5 py-2 pl-5 pr-2.5 rounded-lg text-[13px] transition-colors duration-150${isActive ? ' nav-active' : ''}`}
             style={({ isActive }) => ({
               backgroundColor: isActive ? 'var(--accent-light)' : 'transparent',
               color: isActive ? 'var(--accent-text)' : 'var(--text-muted)',
