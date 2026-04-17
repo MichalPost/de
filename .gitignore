@@ -1,8 +1,25 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
 *.tsbuildinfo
+
+# Tauri
 apps/desktop/src-tauri/icons/
+apps/desktop/src-tauri/target/
+
+# Android (Capacitor)
+apps/mobile/android/app/build/
+apps/mobile/android/.gradle/
+apps/mobile/android/local.properties
+apps/mobile/android/app/release/
+
+# System
 .DS_Store
+Thumbs.db
+
+# Env
 *.local
 .env
 .env.*

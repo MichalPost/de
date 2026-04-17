@@ -1,5 +1,4 @@
-﻿{
-  "$schema": "../gen/schemas/desktop-schema.json",
+{
   "identifier": "main-capability",
   "description": "Default desktop capability set for the main ChemTools window.",
   "windows": ["main"],
@@ -8,6 +7,6 @@
     "dialog:default",
     "fs:default",
     "fs:allow-write-text-file",
-    "fs:allow-write-binary-file"
+    "fs:allow-write-file"
   ]
 }

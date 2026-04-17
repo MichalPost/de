@@ -4,14 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "icon": "tauri icon ../../assets/brand/public/favicon.svg",
+    "icon": "node ../../scripts/run-tauri.mjs icon ../../assets/brand/public/favicon.svg",
     "predev": "pnpm icon",
-    "dev": "tauri dev",
+    "dev": "node ../../scripts/run-tauri.mjs dev",
     "prebuild": "pnpm icon",
     "build": "node ../../scripts/build-desktop.mjs",
-    "build:bundle": "tauri build",
+    "build:bundle": "node ../../scripts/run-tauri.mjs build",
     "pretauri": "pnpm icon",
-    "tauri": "tauri"
+    "tauri": "node ../../scripts/run-tauri.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.1"
