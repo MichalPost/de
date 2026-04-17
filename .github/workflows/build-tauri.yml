@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 配置 Node.js & pnpm
         uses: ./.github/actions/setup-node-pnpm
@@ -86,7 +86,7 @@ jobs:
           projectPath: apps/desktop
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.artifact-name }}-${{ env.VERSION }}
           path: ${{ matrix.artifact-path }}

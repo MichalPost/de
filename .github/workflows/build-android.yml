@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 配置 Node.js & pnpm
         uses: ./.github/actions/setup-node-pnpm
@@ -55,7 +55,7 @@ jobs:
         working-directory: apps/mobile/android
 
       - name: 上传 APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: app-${{ env.VERSION_NAME }}
           path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk

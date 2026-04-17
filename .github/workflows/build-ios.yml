@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -61,7 +61,7 @@ jobs:
           zip -r App-ios-simulator.zip App.app
 
       - name: 上传模拟器构建产物
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ios-simulator-${{ env.VERSION }}
           path: apps/mobile/ios/build/Build/Products/Debug-iphonesimulator/App-ios-simulator.zip
