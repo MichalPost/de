@@ -3,22 +3,20 @@ import { useTemplateStore } from '@chemtools/shared/store/templateStore'
 import { useToast } from '@chemtools/shared/ui/Toast'
 import { DownloadIcon, UploadIcon } from '@chemtools/shared/ui/icons'
 import type { TemplateDefinition } from '../features/batch/types'
+import { exportJsonFile } from '../lib/capacitorUtils'
 
 export function SettingsPage() {
   const { templates, addTemplate } = useTemplateStore()
   const { showToast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleExport = () => {
-    const json = JSON.stringify(templates, null, 2)
-    const blob = new Blob([json], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `reagent-templates-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    showToast(`已导出 ${templates.length} 个模板`)
+  const handleExport = async () => {
+    try {
+      await exportJsonFile(templates, `reagent-templates-${new Date().toISOString().slice(0, 10)}.json`)
+      showToast(`已导出 ${templates.length} 个模板`)
+    } catch {
+      showToast('导出失败')
+    }
   }
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {

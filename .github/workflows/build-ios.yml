@@ -31,6 +31,9 @@ jobs:
       - name: 安装依赖
         run: pnpm install
 
+      - name: 生成版本号
+        run: echo "VERSION=$(date +'%Y.%-m%d').${{ github.run_number }}" >> $GITHUB_ENV
+
       - name: 构建移动端 Web 资源
         run: pnpm build:mobile
 
@@ -70,6 +73,6 @@ jobs:
       - name: 上传模拟器构建产物
         uses: actions/upload-artifact@v4
         with:
-          name: ios-simulator-build
+          name: ios-simulator-${{ env.VERSION }}
           path: apps/mobile/ios/build/Build/Products/Debug-iphonesimulator/App-ios-simulator.zip
           retention-days: 7
