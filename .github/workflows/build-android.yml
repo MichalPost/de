@@ -1,4 +1,4 @@
-name: Build Android APK
+name: 构建 Android APK
 
 on:
   push:
@@ -7,53 +7,71 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: 配置 Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Setup pnpm
+      - name: 配置 pnpm
         uses: pnpm/action-setup@v4
         with:
           version: latest
 
-      - name: Setup Java
+      - name: 缓存 pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+
+      - name: 配置 Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Android SDK
+      - name: 配置 Android SDK
         uses: android-actions/setup-android@v3
 
-      # monorepo: install from root so workspace packages resolve correctly
-      - name: Install dependencies
+      - name: 缓存 Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('apps/mobile/android/**/*.gradle*') }}
+          restore-keys: gradle-
+
+      - name: 安装依赖
         run: pnpm install
 
-      - name: Build mobile web assets
+      - name: 构建移动端 Web 资源
         run: pnpm build:mobile
 
-      - name: Sync Capacitor to Android
+      - name: 同步 Capacitor 到 Android
         run: pnpm cap:sync
         working-directory: apps/mobile
 
-      - name: Grant Gradle execute permission
+      - name: 授予 Gradle 执行权限
         run: chmod +x gradlew
         working-directory: apps/mobile/android
 
-      - name: Build debug APK
+      - name: 构建调试 APK
         run: ./gradlew assembleDebug --no-daemon
         working-directory: apps/mobile/android
 
-      - name: Upload APK
+      - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug

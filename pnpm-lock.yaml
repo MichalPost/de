@@ -12,6 +12,16 @@ importers:
         specifier: ~6.0.2
         version: 6.0.3
 
+  apps/desktop:
+    dependencies:
+      '@tauri-apps/api':
+        specifier: ^2.10.1
+        version: 2.10.1
+    devDependencies:
+      '@tauri-apps/cli':
+        specifier: ^2.10.1
+        version: 2.10.1
+
   apps/mobile:
     dependencies:
       '@capacitor/android':

@@ -1,37 +1,47 @@
-name: Build iOS
+name: 构建 iOS
 
 on:
   push:
     branches: [main, master]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
+      - name: 检出代码
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node.js
+      - name: 配置 Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Setup pnpm
+      - name: 配置 pnpm
         uses: pnpm/action-setup@v4
         with:
           version: latest
 
-      - name: Install dependencies
+      - name: 缓存 pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+
+      - name: 安装依赖
         run: pnpm install
 
-      - name: Build mobile web assets
+      - name: 构建移动端 Web 资源
         run: pnpm build:mobile
 
-      - name: Add iOS platform if not present
+      - name: 添加 iOS 平台（如不存在）
         if: ${{ !hashFiles('apps/mobile/ios/App/App.xcodeproj/project.pbxproj') }}
         run: |
           npx cap add ios
@@ -42,11 +52,11 @@ jobs:
           git push
         working-directory: apps/mobile
 
-      - name: Sync Capacitor to iOS
+      - name: 同步 Capacitor 到 iOS
         run: npx cap sync ios
         working-directory: apps/mobile
 
-      - name: Build for simulator (unsigned)
+      - name: 构建模拟器版本（未签名）
         run: |
           xcodebuild \
             -project apps/mobile/ios/App/App.xcodeproj \
@@ -59,7 +69,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: Upload simulator build
+      - name: 上传模拟器构建产物
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-build
