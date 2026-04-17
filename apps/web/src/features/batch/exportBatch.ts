@@ -1,3 +1,4 @@
+import type * as React from 'react'
 import { renderBarcodeToCanvas } from '@chemtools/shared/lib/barcode'
 import type { BatchGeneratedRecord } from './types'
 
@@ -22,6 +23,16 @@ interface RenderOptions {
 }
 
 type BarItem = { canvas: HTMLCanvasElement; ascii: string }
+
+function formatFileTimestamp(date = new Date()) {
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  const hh = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  const ss = String(date.getSeconds()).padStart(2, '0')
+  return `${yyyy}${mm}${dd}${hh}${min}${ss}`
+}
 
 function buildPageItems(
   records: BatchGeneratedRecord[],
@@ -198,19 +209,52 @@ export async function exportResultsAsPdf(
   globalMode: 'long' | 'short' | 'both' | undefined,
   cols: number,
   perPage: number,
-  templateName: string,
+  _templateName: string,
+  scale = 72,
 ): Promise<void> {
   const { pdf } = await import('@react-pdf/renderer')
+  type DocumentProps = import('@react-pdf/renderer').DocumentProps
   const { createElement } = await import('react')
   const { BatchPdfDocument } = await import('./BatchPdfDocument')
 
-  const doc = createElement(BatchPdfDocument, { records, globalMode, cols, perPage })
+  const doc = createElement(BatchPdfDocument, { records, globalMode, cols, perPage, scale }) as React.ReactElement<DocumentProps>
   const blob = await pdf(doc).toBlob()
 
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `批量生成_${templateName}_${new Date().toISOString().slice(0, 10)}.pdf`
+  a.download = `${formatFileTimestamp()}.pdf`
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 5000)
+}
+
+/** Export a single barcode as PDF, same layout as batch export */
+export async function exportSingleBarcodePdf(
+  encodedAscii: string,
+  shortAscii: string,
+  _filename: string,
+  mode: 'long' | 'short' | 'both' = 'both',
+  scale = 72,
+): Promise<void> {
+  const record: BatchGeneratedRecord = {
+    index: 1, reagentId: 0, serialNumber: 0, agentId: 0, customerId: 0,
+    payloadHex: '', encodedAscii, encodedHex: '', shortAscii, shortHex: '',
+    longSvg: '', shortSvg: '', printMode: mode,
+  }
+  const singleName = formatFileTimestamp()
+
+  const { pdf } = await import('@react-pdf/renderer')
+  type DocumentProps = import('@react-pdf/renderer').DocumentProps
+  const { createElement } = await import('react')
+  const { BatchPdfDocument } = await import('./BatchPdfDocument')
+
+  const doc = createElement(BatchPdfDocument, { records: [record], globalMode: mode, cols: 1, perPage: 1, scale }) as React.ReactElement<DocumentProps>
+  const blob = await pdf(doc).toBlob()
+
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${singleName}.pdf`
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 5000)
 }

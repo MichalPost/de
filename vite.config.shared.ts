@@ -1,11 +1,9 @@
-import type { UserConfig } from 'vite'
-
 /**
  * Shared Vite configuration for all apps in this monorepo.
  * Merge this into each app's vite.config.ts using mergeConfig().
  * Note: alias is NOT set here — each app sets its own relative path.
  */
-export const sharedViteConfig: UserConfig = {
+export const sharedViteConfig = {
   base: './',
   resolve: {
     dedupe: [

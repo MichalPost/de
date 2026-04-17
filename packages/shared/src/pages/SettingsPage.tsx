@@ -4,12 +4,20 @@ import { useToast } from '../ui/Toast'
 import { DownloadIcon, UploadIcon } from '../ui/icons'
 import type { TemplateDefinition } from '../features/batch/types'
 import { usePlatformOps } from '../lib/platformOps'
+import {
+  DEFAULT_PDF_BARCODE_SCALE,
+  MAX_PDF_BARCODE_SCALE,
+  MIN_PDF_BARCODE_SCALE,
+  usePdfSettingsStore,
+} from '../store/pdfSettingsStore'
 
 export function SettingsPage() {
   const { templates, addTemplate } = useTemplateStore()
   const { showToast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const platform = usePlatformOps()
+  const pdfBarcodeScale = usePdfSettingsStore((s) => s.pdfBarcodeScale)
+  const setPdfBarcodeScale = usePdfSettingsStore((s) => s.setPdfBarcodeScale)
 
   const handleExport = async () => {
     try {
@@ -54,6 +62,48 @@ export function SettingsPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-xl mx-auto flex flex-col gap-6">
+      <section className="rounded-2xl border p-5 flex flex-col gap-4" style={cardStyle}>
+        <div>
+          <p className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>PDF 条码占比</p>
+          <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted)' }}>
+            调整导出 PDF 时条码在 A4 页面的占比。当前为 {pdfBarcodeScale}%。
+          </p>
+        </div>
+
+        <div className="rounded-xl border p-4 flex flex-col gap-3" style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)' }}>
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={MIN_PDF_BARCODE_SCALE}
+              max={MAX_PDF_BARCODE_SCALE}
+              step={1}
+              value={pdfBarcodeScale}
+              onChange={(e) => setPdfBarcodeScale(Number(e.target.value))}
+              className="flex-1"
+            />
+            <div
+              className="min-w-[64px] h-9 rounded-xl border flex items-center justify-center text-[13px] font-medium"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-input)', color: 'var(--text-primary)' }}
+            >
+              {pdfBarcodeScale}%
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPdfBarcodeScale(DEFAULT_PDF_BARCODE_SCALE)}
+              className="h-8 px-3 rounded-lg border text-[12px] cursor-pointer transition-colors"
+              style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)', borderColor: 'var(--border)' }}
+            >
+              恢复默认
+            </button>
+            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+              建议区间 {DEFAULT_PDF_BARCODE_SCALE - 6}% - {DEFAULT_PDF_BARCODE_SCALE + 8}%。
+            </span>
+          </div>
+        </div>
+      </section>
+
       <section className="rounded-2xl border p-5 flex flex-col gap-4" style={cardStyle}>
         <div>
           <p className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>模板备份</p>

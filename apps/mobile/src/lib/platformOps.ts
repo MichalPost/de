@@ -9,6 +9,7 @@ import {
   exportResultsAsPng,
   copyResultsAsImage,
   exportResultsAsPdf,
+  exportSingleBarcodePdf,
   MAX_PAGES_PER_PNG,
 } from '../features/batch/exportBatch'
 
@@ -23,5 +24,6 @@ export const mobilePlatformOps: PlatformOps = {
   exportBatchAsPng: exportResultsAsPng,
   copyBatchAsImage: copyResultsAsImage,
   exportBatchAsPdf: exportResultsAsPdf,
+  exportSingleBarcodePdf,
   maxPagesPerPng: MAX_PAGES_PER_PNG,
 }

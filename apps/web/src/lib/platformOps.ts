@@ -5,6 +5,7 @@ import {
   exportResultsAsPng,
   copyResultsAsImage,
   exportResultsAsPdf,
+  exportSingleBarcodePdf,
   MAX_PAGES_PER_PNG,
 } from '../features/batch/exportBatch'
 
@@ -24,7 +25,7 @@ async function copyBarcodeAsPng(ascii: string, isShort = false): Promise<void> {
 export const webPlatformOps: PlatformOps = {
   copyBarcodeAsPng,
   downloadBarcodePng: (ascii, filename) => downloadBarcodePng(ascii, filename),
-  openBarcodePrintView: (ascii, title) => { openBarcodePrintView(ascii, title); return Promise.resolve() },
+  openBarcodePrintView: (ascii, title) => { openBarcodePrintView(ascii, title ?? '条码打印'); return Promise.resolve() },
   exportJsonFile: (data, filename) => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     downloadBlob(blob, filename)
@@ -34,5 +35,6 @@ export const webPlatformOps: PlatformOps = {
   exportBatchAsPng: exportResultsAsPng,
   copyBatchAsImage: copyResultsAsImage,
   exportBatchAsPdf: exportResultsAsPdf,
+  exportSingleBarcodePdf,
   maxPagesPerPng: MAX_PAGES_PER_PNG,
 }

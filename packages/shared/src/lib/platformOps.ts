@@ -6,7 +6,7 @@ export interface PlatformOps {
   // Barcode image ops
   copyBarcodeAsPng(ascii: string, isShort?: boolean): Promise<void>
   downloadBarcodePng(ascii: string, filename: string, isShort?: boolean): Promise<void>
-  openBarcodePrintView(ascii: string, title: string): Promise<void>
+  openBarcodePrintView(ascii: string, title?: string): Promise<void>
   // File export
   exportJsonFile(data: unknown, filename: string): Promise<void>
   /**
@@ -35,10 +35,18 @@ export interface PlatformOps {
     cols: number,
     perPage: number,
     templateName: string,
+    scale?: number,
+  ): Promise<void>
+  /** Export a single barcode (long + short) as a PDF, same style as batch export */
+  exportSingleBarcodePdf(
+    encodedAscii: string,
+    shortAscii: string,
+    filename: string,
+    mode?: 'long' | 'short' | 'both',
+    scale?: number,
   ): Promise<void>
   readonly maxPagesPerPng: number
 }
-
 import { createContext, useContext } from 'react'
 
 export const PlatformOpsContext = createContext<PlatformOps | null>(null)

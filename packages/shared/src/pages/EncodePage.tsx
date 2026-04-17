@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, type KeyboardEvent } from 'react'
-import { useForm, type FieldErrors, type SubmitErrorHandler } from 'react-hook-form'
+import { useForm, type FieldErrors, type Resolver, type SubmitErrorHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardHeader, StatusBar } from '../ui/Card'
 import { Button } from '../ui/Button'
@@ -10,6 +10,7 @@ import { reagentFormSchema, type ReagentFormValues } from '../lib/schemas'
 import { useToast } from '../ui/Toast'
 import { ZapIcon, CheckIcon, CopyImgIcon, InfoIcon } from '../ui/icons'
 import { usePlatformOps } from '../lib/platformOps'
+import { usePdfSettingsStore } from '../store/pdfSettingsStore'
 
 function getDefaultValues(): ReagentFormValues {
   const d = new Date()
@@ -49,10 +50,8 @@ export function EncodePage() {
   const [result, setResult] = useState<Result | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const fieldRefs = useRef<Partial<Record<keyof ReagentFormValues, HTMLInputElement | null>>>({})
-  const platform = usePlatformOps()
-
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ReagentFormValues>({
-    resolver: zodResolver(reagentFormSchema) as Parameters<typeof useForm<ReagentFormValues>>[0]['resolver'],
+    resolver: zodResolver(reagentFormSchema) as Resolver<ReagentFormValues>,
     defaultValues: getDefaultValues(),
     mode: 'onChange',
   })
@@ -231,6 +230,7 @@ function BarcodeSection({ title, svg, ascii }: { title: string; svg: string | nu
   const [copied, setCopied] = useState(false)
   const { showToast } = useToast()
   const platform = usePlatformOps()
+  const pdfBarcodeScale = usePdfSettingsStore((s) => s.pdfBarcodeScale)
 
   const handleCopyImage = async () => {
     if (!ascii) return
@@ -247,7 +247,17 @@ function BarcodeSection({ title, svg, ascii }: { title: string; svg: string | nu
     }
   }
 
-  const handlePrint = () => platform.openBarcodePrintView(ascii, `${title}条码打印`)
+  const handleExportPdf = async () => {
+    if (!ascii) return
+    const isShort = title === '短码'
+    await platform.exportSingleBarcodePdf(
+      ascii,
+      ascii,
+      '',
+      isShort ? 'short' : 'long',
+      pdfBarcodeScale,
+    )
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -283,7 +293,7 @@ function BarcodeSection({ title, svg, ascii }: { title: string; svg: string | nu
             {copied ? '已复制' : copying ? '复制中…' : '复制图片'}
           </button>
           <Button variant="ghost" size="sm" onClick={() => platform.downloadBarcodePng(ascii, `reagent-${title === '短码' ? 'short' : 'long'}.png`)}>PNG</Button>
-          <Button variant="primary" size="sm" onClick={handlePrint}>打印</Button>
+          <Button variant="primary" size="sm" onClick={handleExportPdf} disabled={!svg}>PDF</Button>
         </div>
       </div>
       <div

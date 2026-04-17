@@ -17,6 +17,7 @@ import { useBatchDataStore } from '../store/batchDataStore'
 import { useBatchUIStore } from '../store/batchUIStore'
 import { useHistoryStore } from '../store/historyStore'
 import { usePlatformOps } from '../lib/platformOps'
+import { usePdfSettingsStore } from '../store/pdfSettingsStore'
 import type { BatchHistoryEntry, TemplateDefinition } from '../features/batch/types'
 import type { BatchGeneratedRecord } from '../features/batch/types'
 
@@ -44,6 +45,7 @@ export function BatchPage() {
   const { showToast } = useToast()
   const { addEntry } = useHistoryStore()
   const platform = usePlatformOps()
+  const pdfBarcodeScale = usePdfSettingsStore((s) => s.pdfBarcodeScale)
 
   const activeTemplate = templates.find(t => t.id === activeId) ?? templates[0]
   const totalPages = Math.max(1, Math.ceil(records.length / printPerPage))
@@ -124,7 +126,7 @@ export function BatchPage() {
   const handleExportPdf = async () => {
     try {
       setError(null)
-      await platform.exportBatchAsPdf(records, effectiveMode, printCols, printPerPage, activeTemplate.name)
+      await platform.exportBatchAsPdf(records, effectiveMode, printCols, printPerPage, activeTemplate.name, pdfBarcodeScale)
     } catch (e) { setError((e as Error).message) }
   }
 

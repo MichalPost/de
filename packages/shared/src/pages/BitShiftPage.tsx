@@ -2,7 +2,7 @@ import { useState, type KeyboardEvent } from 'react'
 import { Card, CardHeader, StatusBar } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { calculateShift, type ShiftInput, type ShiftResult, type BaseType, type ShiftMethod } from '../lib/bit-shift'
-import { BinaryIcon, ZapIcon } from '../ui/icons'
+import { ZapIcon } from '../ui/icons'
 import { useToast } from '../ui/Toast'
 
 const BASE_OPTIONS: { value: BaseType; label: string }[] = [

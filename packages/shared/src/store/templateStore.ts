@@ -57,7 +57,7 @@ export const useTemplateStore = create<TemplateStore>()(
     {
       name: 'reagent-templates',
       version: STORE_VERSION,
-      migrate: (persisted, version) => {
+      migrate: (persisted) => {
         const state = persisted as { templates?: Partial<TemplateDefinition>[]; activeId?: string }
         const templates = (state.templates ?? []).map(migrateTemplate)
         if (templates.length === 0) templates.push(createTemplate(getDefaultTemplateDefinition()))

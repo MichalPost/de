@@ -8,7 +8,8 @@
     "predev": "pnpm icon",
     "dev": "tauri dev",
     "prebuild": "pnpm icon",
-    "build": "tauri build",
+    "build": "node ../../scripts/build-desktop.mjs",
+    "build:bundle": "tauri build",
     "pretauri": "pnpm icon",
     "tauri": "tauri"
   },

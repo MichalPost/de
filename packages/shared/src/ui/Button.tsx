@@ -25,14 +25,15 @@ const colorVars: Record<Variant, string> = {
 }
 
 export function Button({
-  children, onClick, variant = 'default', size = 'md', className, style,
+  children, onClick, variant = 'default', size = 'md', className, style, disabled = false,
 }: {
   children: React.ReactNode
-  onClick?: () => void
+  onClick?: () => void | Promise<void>
   variant?: Variant
   size?: 'sm' | 'md'
   className?: string
   style?: React.CSSProperties
+  disabled?: boolean
 }) {
   const base = 'inline-flex items-center gap-1.5 rounded-full font-medium transition-colors cursor-pointer border border-transparent'
   const sizes = { sm: 'px-2.5 py-1 text-[11px]', md: 'px-3.5 py-[7px] text-[12px]' }
@@ -42,17 +43,22 @@ export function Button({
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       style={{
         backgroundColor: bgVars[variant],
         color: colorVars[variant],
         borderColor,
+        opacity: disabled ? 0.4 : undefined,
+        cursor: disabled ? 'not-allowed' : undefined,
         ...style,
       }}
       className={twMerge(base, sizes[size], className)}
       onMouseEnter={e => {
+        if (disabled) return
         e.currentTarget.style.backgroundColor = bgHoverVars[variant]
       }}
       onMouseLeave={e => {
+        if (disabled) return
         e.currentTarget.style.backgroundColor = bgVars[variant]
       }}
     >
