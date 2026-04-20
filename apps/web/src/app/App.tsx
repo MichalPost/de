@@ -1,7 +1,8 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@chemtools/shared/ui/AppShell'
 import { ToastProvider, useToast } from '@chemtools/shared/ui/Toast'
+import { UpdateDialog } from '@chemtools/shared/ui/UpdateDialog'
 import { PlatformOpsContext } from '@chemtools/shared/lib/platformOps'
 import { webPlatformOps } from '../lib/platformOps'
 import { tauriPlatformOps } from '../lib/tauriPlatformOps'
@@ -22,21 +23,40 @@ const SettingsPage = lazy(() => import('../pages/SettingsPage').then(m => ({ def
 const BitShiftPage = lazy(() => import('../pages/BitShiftPage').then(m => ({ default: m.BitShiftPage })))
 const DigitCryptoPage = lazy(() => import('../pages/DigitCryptoPage').then(m => ({ default: m.DigitCryptoPage })))
 
-// Separated so it can access useToast inside ToastProvider
 function UpdateChecker() {
   const { showToast } = useToast()
+  const [update, setUpdate] = useState<{ version: string; install: () => Promise<void> } | null>(null)
+  const [installing, setInstalling] = useState(false)
 
   useEffect(() => {
-    // Only runs inside Tauri — plugin-updater throws outside of it
-    if (!('__TAURI_INTERNALS__' in window)) return
+    if (!isTauri) return
     checkForUpdate().then(({ available, version, install }) => {
-      if (!available || !install) return
-      showToast(`发现新版本 ${version}，正在下载…`)
-      install().catch(() => showToast('更新失败，请稍后重试'))
+      if (available && version && install) setUpdate({ version, install })
     })
-  }, [showToast])
+  }, [])
 
-  return null
+  const handleInstall = async () => {
+    if (!update) return
+    setInstalling(true)
+    try {
+      await update.install()
+    } catch {
+      setInstalling(false)
+      setUpdate(null)
+      showToast('更新失败，请稍后重试', 'error')
+    }
+  }
+
+  if (!update) return null
+
+  return (
+    <UpdateDialog
+      version={update.version}
+      installing={installing}
+      onInstall={handleInstall}
+      onDismiss={() => setUpdate(null)}
+    />
+  )
 }
 
 export function App() {
