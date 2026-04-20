@@ -1,4 +1,4 @@
-name: 构建 Tauri 桌面端
+name: 构建并发布全平台
 
 on:
   push:
@@ -8,15 +8,20 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  # ── 第一步：生成版本号、打 tag、创建 Release ──────────────────────────────
   prepare:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
       release_id: ${{ steps.create_release.outputs.id }}
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
 
     steps:
       - name: 检出代码
@@ -53,8 +58,7 @@ jobs:
           draft: false
           prerelease: false
 
-  # ── 第二步：三平台并行构建，上传到同一个 Release ─────────────────────────
-  build:
+  build_desktop:
     needs: prepare
     strategy:
       fail-fast: false
@@ -132,3 +136,144 @@ jobs:
           tagName: ${{ needs.prepare.outputs.tag }}
           releaseName: ChemTools ${{ needs.prepare.outputs.tag }}
           releaseId: ${{ needs.prepare.outputs.release_id }}
+
+  build_android:
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node.js & pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: 运行单元测试
+        run: pnpm --filter @chemtools/shared test
+
+      - name: 配置 Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: 配置 Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: 注入版本号
+        run: |
+          VERSION_CODE=${{ github.run_number }}
+          VERSION_NAME="${{ needs.prepare.outputs.version }}"
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" apps/mobile/android/app/build.gradle
+          sed -i "s/versionName \".*\"/versionName \"$VERSION_NAME\"/" apps/mobile/android/app/build.gradle
+
+      - name: 构建移动端 Web 资源
+        run: pnpm build:mobile
+        env:
+          VERSION: ${{ env.VERSION_NAME }}
+
+      - name: 同步 Capacitor 到 Android
+        run: pnpm cap:sync
+        working-directory: apps/mobile
+
+      - name: 授予 Gradle 执行权限
+        run: chmod +x gradlew
+        working-directory: apps/mobile/android
+
+      - name: 构建调试 APK
+        run: ./gradlew assembleDebug --no-daemon
+        working-directory: apps/mobile/android
+
+      - name: 重命名 APK（含版本号）
+        run: |
+          mv apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk \
+             apps/mobile/android/app/build/outputs/apk/debug/chemtools-android-${{ env.VERSION_NAME }}.apk
+
+      - name: 上传 Android 到同一个 Release
+        uses: softprops/action-gh-release@v2.3.3
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: ChemTools ${{ needs.prepare.outputs.tag }}
+          files: apps/mobile/android/app/build/outputs/apk/debug/chemtools-android-${{ env.VERSION_NAME }}.apk
+          fail_on_unmatched_files: true
+
+  build_ios:
+    needs: prepare
+    runs-on: macos-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 配置 Node.js & pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: 注入版本号
+        run: echo "VERSION=${{ needs.prepare.outputs.version }}" >> $GITHUB_ENV
+
+      - name: 构建移动端 Web 资源
+        run: pnpm build:mobile
+        env:
+          VERSION: ${{ env.VERSION }}
+
+      - name: 添加 iOS 平台（如不存在）
+        if: ${{ !hashFiles('apps/mobile/ios/App/App.xcodeproj/project.pbxproj') }}
+        run: |
+          npx cap add ios
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/mobile/ios/
+          git commit -m "ci: init iOS platform [skip ci]"
+          git push
+        working-directory: apps/mobile
+
+      - name: 同步 Capacitor 到 iOS
+        run: npx cap sync ios
+        working-directory: apps/mobile
+
+      - name: 构建模拟器版本（未签名）
+        run: |
+          xcodebuild \
+            -project apps/mobile/ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath apps/mobile/ios/build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: 打包模拟器产物为 zip
+        run: |
+          cd apps/mobile/ios/build/Build/Products/Debug-iphonesimulator
+          zip -r chemtools-ios-simulator-${{ env.VERSION }}.zip App.app
+
+      - name: 上传 iOS 到同一个 Release
+        uses: softprops/action-gh-release@v2.3.3
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: ChemTools ${{ needs.prepare.outputs.tag }}
+          files: apps/mobile/ios/build/Build/Products/Debug-iphonesimulator/chemtools-ios-simulator-${{ env.VERSION }}.zip
+          fail_on_unmatched_files: true
+
+  summary:
+    needs: [prepare, build_desktop, build_android, build_ios]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 输出发布摘要
+        run: |
+          {
+            echo "## Release 已生成"
+            echo
+            echo "- Tag: \`${{ needs.prepare.outputs.tag }}\`"
+            echo "- Release: https://github.com/${{ github.repository }}/releases/tag/${{ needs.prepare.outputs.tag }}"
+            echo
+            echo "包含产物："
+            echo "- 桌面端: Windows / macOS / Linux"
+            echo "- 手机端: Android APK / iOS Simulator ZIP"
+          } >> $GITHUB_STEP_SUMMARY

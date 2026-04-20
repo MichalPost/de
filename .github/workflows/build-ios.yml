@@ -1,8 +1,6 @@
 name: 构建 iOS
 
 on:
-  push:
-    branches: [main, master]
   workflow_dispatch:
 
 env:
@@ -61,7 +59,7 @@ jobs:
           zip -r App-ios-simulator.zip App.app
 
       - name: 上传模拟器构建产物
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-${{ env.VERSION }}
           path: apps/mobile/ios/build/Build/Products/Debug-iphonesimulator/App-ios-simulator.zip

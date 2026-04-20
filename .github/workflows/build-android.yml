@@ -1,8 +1,6 @@
 name: 构建 Android APK
 
 on:
-  push:
-    branches: [main, master]
   workflow_dispatch:
 
 env:
@@ -36,7 +34,6 @@ jobs:
           VERSION_CODE=${{ github.run_number }}
           VERSION_NAME="$(date +'%Y.%-m%d').${{ github.run_number }}"
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
-          echo "TAG=v${VERSION_NAME}" >> $GITHUB_ENV
           sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" apps/mobile/android/app/build.gradle
           sed -i "s/versionName \".*\"/versionName \"$VERSION_NAME\"/" apps/mobile/android/app/build.gradle
 
@@ -60,24 +57,11 @@ jobs:
       - name: 重命名 APK（含版本号）
         run: |
           mv apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk \
-             apps/mobile/android/app/build/outputs/apk/debug/chemtools-${{ env.VERSION_NAME }}.apk
+             apps/mobile/android/app/build/outputs/apk/debug/chemtools-android-${{ env.VERSION_NAME }}.apk
 
-      - name: 创建 Git tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Skip if tag already exists (e.g. re-run on same day)
-          git tag ${{ env.TAG }} 2>/dev/null || echo "Tag already exists, skipping"
-          git push origin ${{ env.TAG }} 2>/dev/null || echo "Tag already on remote, skipping"
-
-      - name: 发布到 GitHub Releases
-        uses: softprops/action-gh-release@v2.3.3
+      - name: 上传手动构建产物
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ env.TAG }}
-          name: ChemTools Android ${{ env.TAG }}
-          body: |
-            自动构建版本 ${{ env.TAG }}
-            提交：${{ github.sha }}
-          files: apps/mobile/android/app/build/outputs/apk/debug/chemtools-${{ env.VERSION_NAME }}.apk
-          draft: false
-          prerelease: false
+          name: android-debug-${{ env.VERSION_NAME }}
+          path: apps/mobile/android/app/build/outputs/apk/debug/chemtools-android-${{ env.VERSION_NAME }}.apk
+          retention-days: 7
