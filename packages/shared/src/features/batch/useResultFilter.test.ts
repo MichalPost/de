@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useResultFilter } from './useResultFilter'
 import type { BatchGeneratedRecord } from './types'
@@ -29,7 +29,19 @@ const RECORDS: BatchGeneratedRecord[] = [
   makeRecord({ index: 3, reagentId: 30, serialNumber: 300, agentId: 5, customerId: 6, encodedAscii: 'CCCC', shortAscii: 'CC' }),
 ]
 
+// Helper: set query and flush the 150ms debounce timer
+function setQueryAndFlush(setQuery: (v: string) => void, value: string) {
+  act(() => {
+    setQuery(value)
+    vi.runAllTimers()
+  })
+}
+
 describe('useResultFilter', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('returns all records when query is empty', () => {
     const { result } = renderHook(() => useResultFilter(RECORDS))
     expect(result.current.filtered).toHaveLength(3)
@@ -37,35 +49,40 @@ describe('useResultFilter', () => {
   })
 
   it('filters by reagentId', () => {
+    vi.useFakeTimers()
     const { result } = renderHook(() => useResultFilter(RECORDS))
-    act(() => result.current.setQuery('20'))
+    setQueryAndFlush(result.current.setQuery, '20')
     expect(result.current.filtered).toHaveLength(1)
     expect(result.current.filtered[0].reagentId).toBe(20)
   })
 
   it('filters by encodedAscii', () => {
+    vi.useFakeTimers()
     const { result } = renderHook(() => useResultFilter(RECORDS))
-    act(() => result.current.setQuery('cccc'))
+    setQueryAndFlush(result.current.setQuery, 'cccc')
     expect(result.current.filtered).toHaveLength(1)
     expect(result.current.filtered[0].reagentId).toBe(30)
   })
 
   it('filters by serialNumber', () => {
+    vi.useFakeTimers()
     const { result } = renderHook(() => useResultFilter(RECORDS))
-    act(() => result.current.setQuery('100'))
+    setQueryAndFlush(result.current.setQuery, '100')
     expect(result.current.filtered).toHaveLength(1)
     expect(result.current.filtered[0].serialNumber).toBe(100)
   })
 
   it('matchCount reflects filtered count', () => {
+    vi.useFakeTimers()
     const { result } = renderHook(() => useResultFilter(RECORDS))
-    act(() => result.current.setQuery('10'))
+    setQueryAndFlush(result.current.setQuery, '10')
     expect(result.current.matchCount).toBe(1)
   })
 
   it('returns empty when no match', () => {
+    vi.useFakeTimers()
     const { result } = renderHook(() => useResultFilter(RECORDS))
-    act(() => result.current.setQuery('zzz'))
+    setQueryAndFlush(result.current.setQuery, 'zzz')
     expect(result.current.filtered).toHaveLength(0)
   })
 })
