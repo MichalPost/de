@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import type { ReactNode } from 'react'
 import { useTemplateStore } from '../store/templateStore'
 import { useToast } from '../ui/Toast'
 import { DownloadIcon, UploadIcon } from '../ui/icons'
@@ -11,7 +12,12 @@ import {
   usePdfSettingsStore,
 } from '../store/pdfSettingsStore'
 
-export function SettingsPage() {
+interface SettingsPageProps {
+  /** Platform-specific update + version section rendered at the bottom */
+  updateSection?: ReactNode
+}
+
+export function SettingsPage({ updateSection }: SettingsPageProps = {}) {
   const { templates, addTemplate } = useTemplateStore()
   const { showToast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -148,6 +154,8 @@ export function SettingsPage() {
           导入时会追加到现有模板，不会覆盖。
         </p>
       </section>
+
+      {updateSection}
     </div>
   )
 }

@@ -7,6 +7,9 @@ import { sharedViteConfig } from '../../vite.config.shared'
 export default defineConfig(
   mergeConfig(sharedViteConfig, {
     plugins: [tailwindcss(), react()],
+    define: {
+      __APP_VERSION__: JSON.stringify(process.env.VERSION ?? '0.0.0'),
+    },
     resolve: {
       alias: {
         '@chemtools/shared': resolve(__dirname, '../../packages/shared/src'),
