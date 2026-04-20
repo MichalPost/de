@@ -6,7 +6,6 @@
     "frontendDist": "../../web/dist",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "pnpm --filter @chemtools/web dev",
-    "beforeBuildCommand": "pnpm --filter @chemtools/web build",
     "removeUnusedCommands": true
   },
   "app": {
