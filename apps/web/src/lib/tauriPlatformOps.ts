@@ -21,12 +21,14 @@ let _tauriDialog: typeof import('@tauri-apps/plugin-dialog') | undefined
 let _tauriFs: typeof import('@tauri-apps/plugin-fs') | undefined
 let _reactPdf: typeof import('@react-pdf/renderer') | undefined
 let _batchPdfDocument: typeof import('@chemtools/shared/features/batch/BatchPdfDocument') | undefined
+const TAURI_DIALOG_MODULE = '@tauri-apps/plugin-dialog'
+const TAURI_FS_MODULE = '@tauri-apps/plugin-fs'
 
 async function getTauriDialog() {
-  return (_tauriDialog ??= await import('@tauri-apps/plugin-dialog'))
+  return (_tauriDialog ??= await import(/* @vite-ignore */ TAURI_DIALOG_MODULE))
 }
 async function getTauriFs() {
-  return (_tauriFs ??= await import('@tauri-apps/plugin-fs'))
+  return (_tauriFs ??= await import(/* @vite-ignore */ TAURI_FS_MODULE))
 }
 async function getReactPdf() {
   return (_reactPdf ??= await import('@react-pdf/renderer'))

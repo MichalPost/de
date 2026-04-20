@@ -57,6 +57,7 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
   const [editingTemplate, setEditingTemplate] = useState<TemplateDefinition | null>(null)
   const [isNew, setIsNew] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const workerDisabledRef = useRef(false)
   const copyImageState = useCopyAsync()
   const { showToast } = useToast()
   const { addEntry } = useHistoryStore()
@@ -67,6 +68,26 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
   const totalPages = Math.max(1, Math.ceil(records.length / printPerPage))
   const currentPageRecords = records.slice(currentPage * printPerPage, (currentPage + 1) * printPerPage)
   const effectiveMode = printMode === 'auto' ? undefined : printMode as 'long' | 'short' | 'both'
+
+  const runWorkerTask = useCallback(async <T,>(
+    task: (workerApi: Remote<BatchWorkerApi>) => Promise<T>,
+    fallback: () => T,
+  ): Promise<T> => {
+    if (!worker || workerDisabledRef.current) return fallback()
+
+    try {
+      return await Promise.race([
+        task(worker),
+        new Promise<T>((_, reject) => {
+          window.setTimeout(() => reject(new Error('批量生成后台任务响应超时')), 4000)
+        }),
+      ])
+    } catch {
+      workerDisabledRef.current = true
+      showToast('后台生成器不可用，已自动切换为当前页面生成。', 'error')
+      return fallback()
+    }
+  }, [worker, showToast])
 
   const handleSave = (t: TemplateDefinition) => { updateTemplate(t); setEditingTemplate(null) }
   const handleSaveAs = (t: TemplateDefinition) => {
@@ -109,17 +130,20 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
         if (isNaN(count) || count < 1) throw new Error('数量至少为 1')
         const reagentIds = Array.from({ length: count }, () => activeTemplate.reagentId)
         const template = { ...activeTemplate, serialMode: 'increment' as const }
-        result = worker
-          ? await worker.buildBatchCodes(template, { reagentIds, ...overrides })
-          : buildBatchCodes(template, { reagentIds, ...overrides })
+        result = await runWorkerTask(
+          workerApi => workerApi.buildBatchCodes(template, { reagentIds, ...overrides }),
+          () => buildBatchCodes(template, { reagentIds, ...overrides }),
+        )
       } else {
-        const reagentIds = worker
-          ? await worker.parseReagentIds(activeTemplate.genIdList)
-          : parseReagentIds(activeTemplate.genIdList)
+        const reagentIds = await runWorkerTask(
+          workerApi => workerApi.parseReagentIds(activeTemplate.genIdList),
+          () => parseReagentIds(activeTemplate.genIdList),
+        )
         if (reagentIds.length === 0) throw new Error('编号列表为空，请先编辑模板')
-        result = worker
-          ? await worker.buildBatchCodes(activeTemplate, { reagentIds, ...overrides })
-          : buildBatchCodes(activeTemplate, { reagentIds, ...overrides })
+        result = await runWorkerTask(
+          workerApi => workerApi.buildBatchCodes(activeTemplate, { reagentIds, ...overrides }),
+          () => buildBatchCodes(activeTemplate, { reagentIds, ...overrides }),
+        )
       }
       setRecords(result)
       addEntry({ templateName: activeTemplate.name, recordCount: result.length, records: result, printMode, printCols, printPerPage })
@@ -129,7 +153,7 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
     } finally {
       setRunning(false)
     }
-  }, [worker, agentOverride, customerOverride, serialCountOverride, validUsesOverride, activeTemplate, printMode, printCols, printPerPage, setRecords, setError, setRunning, addEntry])
+  }, [agentOverride, customerOverride, serialCountOverride, validUsesOverride, activeTemplate, printMode, printCols, printPerPage, setRecords, setError, setRunning, addEntry, runWorkerTask])
 
   const handleExportPng = async () => {
     try {
