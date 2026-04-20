@@ -28,6 +28,16 @@ export function ScanBatchPage() {
   const previewUrlsRef = useRef<Set<string>>(new Set())
   const platform = usePlatformOps()
 
+  // Pre-warm the ZXing WASM module as soon as the page mounts so the first
+  // scan doesn't pay the initialisation cost (~200-400ms).
+  useEffect(() => {
+    import('zxing-wasm/reader').then(m => {
+      // Calling readBarcodesFromImageFile with an empty blob triggers WASM init
+      // without doing any real work. Errors are expected and ignored.
+      m.readBarcodesFromImageFile(new Blob(), {}).catch(() => {})
+    })
+  }, [])
+
   const handleFiles = useCallback(async (files: File[]) => {
     setScanning(true)
     setProgress({ done: 0, total: files.length })

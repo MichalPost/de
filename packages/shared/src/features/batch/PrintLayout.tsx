@@ -1,4 +1,4 @@
-import { forwardRef, useMemo } from 'react'
+import { forwardRef, memo, useMemo } from 'react'
 import type { BatchGeneratedRecord } from './types'
 import { barcodeToPngDataUrl } from '../../lib/barcode'
 
@@ -11,10 +11,13 @@ interface Props {
 
 export const PrintLayout = forwardRef<HTMLDivElement, Props>(
   ({ records, globalMode, cols = 1, perPage = 10 }, ref) => {
-    const pages: BatchGeneratedRecord[][] = []
-    for (let i = 0; i < records.length; i += perPage) {
-      pages.push(records.slice(i, i + perPage))
-    }
+    const pages = useMemo(() => {
+      const result: BatchGeneratedRecord[][] = []
+      for (let i = 0; i < records.length; i += perPage) {
+        result.push(records.slice(i, i + perPage))
+      }
+      return result
+    }, [records, perPage])
 
     return (
       <div ref={ref} style={{ background: '#fff', width: '100%' }}>
@@ -64,7 +67,7 @@ export const PrintLayout = forwardRef<HTMLDivElement, Props>(
 )
 PrintLayout.displayName = 'PrintLayout'
 
-function PrintCell({ record, mode }: { record: BatchGeneratedRecord; mode: 'long' | 'short' | 'both' }) {
+const PrintCell = memo(function PrintCell({ record, mode }: { record: BatchGeneratedRecord; mode: 'long' | 'short' | 'both' }) {
   const longUrl = useMemo(() => {
     if (mode !== 'long' && mode !== 'both') return null
     return barcodeToPngDataUrl(record.encodedAscii, { width: 1.6, height: 72, margin: 10 })
@@ -81,12 +84,12 @@ function PrintCell({ record, mode }: { record: BatchGeneratedRecord; mode: 'long
       {shortUrl && <BarcodeItem imgUrl={shortUrl} ascii={record.shortAscii} />}
     </div>
   )
-}
+})
 
-function BarcodeItem({ imgUrl, ascii }: { imgUrl: string; ascii: string }) {
+const BarcodeItem = memo(function BarcodeItem({ imgUrl, ascii }: { imgUrl: string; ascii: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
       <img src={imgUrl} alt={ascii} style={{ maxWidth: '100%' }} />
     </div>
   )
-}
+})

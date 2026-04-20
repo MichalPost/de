@@ -12,10 +12,20 @@ function loadHistory(): BatchHistoryEntry[] {
   return []
 }
 
+// Use requestIdleCallback when available so localStorage writes don't block
+// the main thread after the user triggers a generate action.
 function saveHistory(entries: BatchHistoryEntry[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
-  } catch { /* quota exceeded — trim and retry */ }
+  const write = () => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
+    } catch { /* quota exceeded — ignore */ }
+  }
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(write, { timeout: 2000 })
+  } else {
+    // Safari / older environments fallback
+    setTimeout(write, 0)
+  }
 }
 
 interface HistoryStore {

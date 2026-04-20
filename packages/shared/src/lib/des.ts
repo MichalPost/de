@@ -119,17 +119,18 @@ const S_BOXES = [
   ],
 ]
 
-function bytesToBits(bytes: Uint8Array): number[] {
-  const bits: number[] = []
+function bytesToBits(bytes: Uint8Array): Uint8Array {
+  const bits = new Uint8Array(bytes.length * 8)
+  let i = 0
   for (const byte of bytes) {
     for (let index = 7; index >= 0; index -= 1) {
-      bits.push((byte >> index) & 1)
+      bits[i++] = (byte >> index) & 1
     }
   }
   return bits
 }
 
-function bitsToBytes(bits: number[]): Uint8Array {
+function bitsToBytes(bits: Uint8Array): Uint8Array {
   const result = new Uint8Array(bits.length / 8)
   for (let byteIndex = 0; byteIndex < result.length; byteIndex += 1) {
     let value = 0
@@ -141,44 +142,67 @@ function bitsToBytes(bits: number[]): Uint8Array {
   return result
 }
 
-function permute(bits: number[], table: number[]): number[] {
-  return table.map((position) => bits[position - 1])
+function permute(bits: Uint8Array, table: number[]): Uint8Array {
+  const out = new Uint8Array(table.length)
+  for (let i = 0; i < table.length; i++) out[i] = bits[table[i] - 1]
+  return out
 }
 
-function xorBits(left: number[], right: number[]): number[] {
-  return left.map((bit, index) => bit ^ right[index])
+function xorBits(left: Uint8Array, right: Uint8Array): Uint8Array {
+  const out = new Uint8Array(left.length)
+  for (let i = 0; i < left.length; i++) out[i] = left[i] ^ right[i]
+  return out
 }
 
-function leftRotate(bits: number[], count: number): number[] {
-  return bits.slice(count).concat(bits.slice(0, count))
+function leftRotate(bits: Uint8Array, count: number): Uint8Array {
+  const out = new Uint8Array(bits.length)
+  const len = bits.length
+  for (let i = 0; i < len; i++) out[i] = bits[(i + count) % len]
+  return out
 }
 
-function createSubKeys(keyBytes: Uint8Array): number[][] {
+// Cache subkeys by hex-encoded key — batch generation reuses the same key for
+// every record, so cache hit rate is ~100% in normal usage.
+const subKeyCache = new Map<string, Uint8Array[]>()
+
+function createSubKeys(keyBytes: Uint8Array): Uint8Array[] {
+  // Build a cheap hex key for cache lookup without importing bytesToHex
+  let cacheKey = ''
+  for (const b of keyBytes) cacheKey += b.toString(16).padStart(2, '0')
+
+  const cached = subKeyCache.get(cacheKey)
+  if (cached) return cached
+
   const keyBits = permute(bytesToBits(keyBytes), PC1)
   let left = keyBits.slice(0, 28)
   let right = keyBits.slice(28)
-  const subKeys: number[][] = []
+  const subKeys: Uint8Array[] = []
 
   for (const shift of SHIFTS) {
     left = leftRotate(left, shift)
     right = leftRotate(right, shift)
-    subKeys.push(permute(left.concat(right), PC2))
+    const combined = new Uint8Array(56)
+    combined.set(left)
+    combined.set(right, 28)
+    subKeys.push(permute(combined, PC2))
   }
 
+  subKeyCache.set(cacheKey, subKeys)
   return subKeys
 }
 
-function sBoxSubstitution(bits48: number[]): number[] {
-  const output: number[] = []
+function sBoxSubstitution(bits48: Uint8Array): Uint8Array {
+  const output = new Uint8Array(32)
+  let outIdx = 0
 
   for (let boxIndex = 0; boxIndex < 8; boxIndex += 1) {
-    const chunk = bits48.slice(boxIndex * 6, boxIndex * 6 + 6)
-    const row = (chunk[0] << 1) | chunk[5]
-    const column = (chunk[1] << 3) | (chunk[2] << 2) | (chunk[3] << 1) | chunk[4]
+    const base = boxIndex * 6
+    const row = (bits48[base] << 1) | bits48[base + 5]
+    const column = (bits48[base + 1] << 3) | (bits48[base + 2] << 2) | (bits48[base + 3] << 1) | bits48[base + 4]
     const value = S_BOXES[boxIndex][row][column]
 
     for (let bitIndex = 3; bitIndex >= 0; bitIndex -= 1) {
-      output.push((value >> bitIndex) & 1)
+      output[outIdx++] = (value >> bitIndex) & 1
     }
   }
 
@@ -206,7 +230,10 @@ function desBlock(blockBytes: Uint8Array, keyBytes: Uint8Array, decrypt = false)
     right = nextRight
   }
 
-  return bitsToBytes(permute(right.concat(left), IP_INV))
+  const combined = new Uint8Array(64)
+  combined.set(right)
+  combined.set(left, 32)
+  return bitsToBytes(permute(combined, IP_INV))
 }
 
 export function encrypt3DESBlock(blockBytes: Uint8Array, keyBytes: Uint8Array): Uint8Array {

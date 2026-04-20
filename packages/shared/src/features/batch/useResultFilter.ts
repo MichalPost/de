@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useDebounceFn } from 'ahooks'
 import type { BatchGeneratedRecord } from './types'
 
 export interface FilterState {
@@ -6,10 +7,28 @@ export interface FilterState {
 }
 
 export function useResultFilter(records: BatchGeneratedRecord[]) {
-  const [query, setQuery] = useState('')
+  const [query, setQueryRaw] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+
+  // Debounce the filter computation — avoids re-filtering on every keystroke
+  // for large record sets. 150ms feels instant but skips intermediate states.
+  const { run: setQuery } = useDebounceFn(
+    (value: string) => {
+      setQueryRaw(value)
+      setDebouncedQuery(value)
+    },
+    { wait: 150 },
+  )
+
+  // Keep the input value in sync immediately for the controlled input
+  const [inputValue, setInputValue] = useState('')
+  const handleSetQuery = (value: string) => {
+    setInputValue(value)
+    setQuery(value)
+  }
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = debouncedQuery.trim().toLowerCase()
     if (!q) return records
     return records.filter((r) => {
       return (
@@ -21,7 +40,7 @@ export function useResultFilter(records: BatchGeneratedRecord[]) {
         r.shortAscii.toLowerCase().includes(q)
       )
     })
-  }, [records, query])
+  }, [records, debouncedQuery])
 
-  return { query, setQuery, filtered, total: records.length, matchCount: filtered.length }
+  return { query: inputValue, setQuery: handleSetQuery, filtered, total: records.length, matchCount: filtered.length }
 }

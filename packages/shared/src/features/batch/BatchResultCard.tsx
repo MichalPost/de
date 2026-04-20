@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react'
 import type { BatchGeneratedRecord } from './types'
 import { CopyButton, useCopyAsync } from '../../ui/CopyButton'
 import { usePlatformOps } from '../../lib/platformOps'
@@ -5,7 +6,16 @@ import { barcodeToPngDataUrl } from '../../lib/barcode'
 import { motion } from 'motion/react'
 import { ImgIcon, CheckIcon } from '../../ui/icons'
 
-export function BatchResultCard({ record, index = 0 }: { record: BatchGeneratedRecord; index?: number }) {
+export const BatchResultCard = memo(function BatchResultCard({ record, index = 0 }: { record: BatchGeneratedRecord; index?: number }) {
+  const longUrl = useMemo(
+    () => barcodeToPngDataUrl(record.encodedAscii, { width: 1.4, height: 64, margin: 6 }),
+    [record.encodedAscii],
+  )
+  const shortUrl = useMemo(
+    () => barcodeToPngDataUrl(record.shortAscii, { width: 2, height: 64, margin: 6 }),
+    [record.shortAscii],
+  )
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -37,22 +47,22 @@ export function BatchResultCard({ record, index = 0 }: { record: BatchGeneratedR
         <BarcodeBlock
           label="长码"
           ascii={record.encodedAscii}
-          previewUrl={barcodeToPngDataUrl(record.encodedAscii, { width: 1.4, height: 64, margin: 6 })}
+          previewUrl={longUrl}
           filenameBase={`long_${record.reagentId}_${record.index}`}
         />
         <BarcodeBlock
           label="短码"
           ascii={record.shortAscii}
-          previewUrl={barcodeToPngDataUrl(record.shortAscii, { width: 2, height: 64, margin: 6 })}
+          previewUrl={shortUrl}
           filenameBase={`short_${record.reagentId}_${record.index}`}
           compact
         />
       </div>
     </motion.div>
   )
-}
+})
 
-function BarcodeBlock({
+const BarcodeBlock = memo(function BarcodeBlock({
   label, ascii, previewUrl, filenameBase, compact,
 }: {
   label: string
@@ -136,4 +146,4 @@ function BarcodeBlock({
       </div>
     </div>
   )
-}
+})

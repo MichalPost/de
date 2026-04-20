@@ -5,7 +5,9 @@
   "build": {
     "frontendDist": "../../web/dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "pnpm --filter @chemtools/web dev"
+    "beforeDevCommand": "pnpm --filter @chemtools/web dev",
+    "beforeBuildCommand": "pnpm --filter @chemtools/web build",
+    "removeUnusedCommands": true
   },
   "app": {
     "windows": [
@@ -41,5 +43,14 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYwMkU2RUZENzM5RTI3NTEKUldSUko1NXovVzR1WUJvZHdyMHBuU0RtNVRDVXpSNG16bys4MHAxa1hWcmF0eVVQMnBtakZDZnMK",
+      "endpoints": [
+        "https://github.com/MichalPost/de/releases/latest/download/latest.json"
+      ],
+      "dialog": false
+    }
   }
 }

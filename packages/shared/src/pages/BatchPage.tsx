@@ -20,19 +20,35 @@ import { usePlatformOps } from '../lib/platformOps'
 import { usePdfSettingsStore } from '../store/pdfSettingsStore'
 import type { BatchHistoryEntry, TemplateDefinition } from '../features/batch/types'
 import type { BatchGeneratedRecord } from '../features/batch/types'
+import type { BatchWorkerApi } from '../features/batch/useBatchWorker'
+import type { Remote } from 'comlink'
 
 type PrintMode = 'long' | 'short' | 'both' | 'auto'
 type ViewMode = 'preview' | 'print'
 
-export function BatchPage() {
+interface BatchPageProps {
+  /** Optional Comlink-wrapped worker. When provided, batch generation runs off the main thread. */
+  worker?: Remote<BatchWorkerApi>
+}
+
+export function BatchPage({ worker }: BatchPageProps = {}) {
   const { templates, activeId, setActiveId, addTemplate, updateTemplate, deleteTemplate } = useTemplateStore()
-  const {
-    records, error, running,
-    agentOverride, customerOverride, serialCountOverride, validUsesOverride,
-    preserveOverridesOnTemplateSwitch,
-    setRecords, setError, setRunning,
-    setAgentOverride, setCustomerOverride, setSerialCountOverride, setValidUsesOverride, setPreserveOverridesOnTemplateSwitch,
-  } = useBatchDataStore()
+  const records = useBatchDataStore(s => s.records)
+  const error = useBatchDataStore(s => s.error)
+  const running = useBatchDataStore(s => s.running)
+  const agentOverride = useBatchDataStore(s => s.agentOverride)
+  const customerOverride = useBatchDataStore(s => s.customerOverride)
+  const serialCountOverride = useBatchDataStore(s => s.serialCountOverride)
+  const validUsesOverride = useBatchDataStore(s => s.validUsesOverride)
+  const preserveOverridesOnTemplateSwitch = useBatchDataStore(s => s.preserveOverridesOnTemplateSwitch)
+  const setRecords = useBatchDataStore(s => s.setRecords)
+  const setError = useBatchDataStore(s => s.setError)
+  const setRunning = useBatchDataStore(s => s.setRunning)
+  const setAgentOverride = useBatchDataStore(s => s.setAgentOverride)
+  const setCustomerOverride = useBatchDataStore(s => s.setCustomerOverride)
+  const setSerialCountOverride = useBatchDataStore(s => s.setSerialCountOverride)
+  const setValidUsesOverride = useBatchDataStore(s => s.setValidUsesOverride)
+  const setPreserveOverridesOnTemplateSwitch = useBatchDataStore(s => s.setPreserveOverridesOnTemplateSwitch)
   const {
     viewMode, printMode, printCols, printPerPage, currentPage,
     setViewMode, setPrintMode, setPrintCols, setPrintPerPage, setCurrentPage,
@@ -78,38 +94,42 @@ export function BatchPage() {
     setIsNew(false)
   }
 
-  const handleGenerate = useCallback(() => {
+  const handleGenerate = useCallback(async () => {
     setError(null)
     setRunning(true)
-    setTimeout(() => {
-      try {
-        const overrides = {
-          agentIdOverride: agentOverride.trim() ? Number(agentOverride) : undefined,
-          customerIdOverride: customerOverride.trim() ? Number(customerOverride) : undefined,
-          validUsesOverride: validUsesOverride.trim() ? Number(validUsesOverride) : undefined,
-        }
-        if (activeTemplate.genMode === 'serial') {
-          const count = serialCountOverride.trim() ? parseInt(serialCountOverride, 10) : activeTemplate.genCount
-          if (isNaN(count) || count < 1) throw new Error('数量至少为 1')
-          const reagentIds = Array.from({ length: count }, () => activeTemplate.reagentId)
-          const result = buildBatchCodes({ ...activeTemplate, serialMode: 'increment' as const }, { reagentIds, ...overrides })
-          setRecords(result)
-          addEntry({ templateName: activeTemplate.name, recordCount: result.length, records: result, printMode, printCols, printPerPage })
-        } else {
-          const reagentIds = parseReagentIds(activeTemplate.genIdList)
-          if (reagentIds.length === 0) throw new Error('编号列表为空，请先编辑模板')
-          const result = buildBatchCodes(activeTemplate, { reagentIds, ...overrides })
-          setRecords(result)
-          addEntry({ templateName: activeTemplate.name, recordCount: result.length, records: result, printMode, printCols, printPerPage })
-        }
-        setError(null)
-      } catch (e) {
-        setError((e as Error).message)
-      } finally {
-        setRunning(false)
+    try {
+      const overrides = {
+        agentIdOverride: agentOverride.trim() ? Number(agentOverride) : undefined,
+        customerIdOverride: customerOverride.trim() ? Number(customerOverride) : undefined,
+        validUsesOverride: validUsesOverride.trim() ? Number(validUsesOverride) : undefined,
       }
-    }, 0)
-  }, [agentOverride, customerOverride, serialCountOverride, validUsesOverride, activeTemplate, printMode, printCols, printPerPage, setRecords, setError, setRunning, addEntry])
+      let result: BatchGeneratedRecord[]
+      if (activeTemplate.genMode === 'serial') {
+        const count = serialCountOverride.trim() ? parseInt(serialCountOverride, 10) : activeTemplate.genCount
+        if (isNaN(count) || count < 1) throw new Error('数量至少为 1')
+        const reagentIds = Array.from({ length: count }, () => activeTemplate.reagentId)
+        const template = { ...activeTemplate, serialMode: 'increment' as const }
+        result = worker
+          ? await worker.buildBatchCodes(template, { reagentIds, ...overrides })
+          : buildBatchCodes(template, { reagentIds, ...overrides })
+      } else {
+        const reagentIds = worker
+          ? await worker.parseReagentIds(activeTemplate.genIdList)
+          : parseReagentIds(activeTemplate.genIdList)
+        if (reagentIds.length === 0) throw new Error('编号列表为空，请先编辑模板')
+        result = worker
+          ? await worker.buildBatchCodes(activeTemplate, { reagentIds, ...overrides })
+          : buildBatchCodes(activeTemplate, { reagentIds, ...overrides })
+      }
+      setRecords(result)
+      addEntry({ templateName: activeTemplate.name, recordCount: result.length, records: result, printMode, printCols, printPerPage })
+      setError(null)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setRunning(false)
+    }
+  }, [worker, agentOverride, customerOverride, serialCountOverride, validUsesOverride, activeTemplate, printMode, printCols, printPerPage, setRecords, setError, setRunning, addEntry])
 
   const handleExportPng = async () => {
     try {

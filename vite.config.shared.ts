@@ -26,6 +26,25 @@ export const sharedViteConfig = {
   },
   build: {
     chunkSizeWarningLimit: 1600,
-    cssMinify: false,
+    // Use lightningcss for faster, smaller CSS output (built into Vite 5+)
+    cssMinify: 'lightningcss' as const,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React runtime — cached aggressively, changes rarely
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // PDF engine is large (~1MB+); split so it only loads on demand
+          'vendor-pdf': ['@react-pdf/renderer', 'jspdf', 'svg2pdf.js'],
+          // Canvas-based export; separate from PDF path
+          'vendor-canvas': ['html2canvas'],
+          // Barcode libs including WASM binary — heaviest single chunk
+          'vendor-barcode': ['jsbarcode', 'zxing-wasm'],
+          // Form validation stack
+          'vendor-form': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          // UI utilities — small but frequently updated
+          'vendor-ui': ['motion', 'zustand', 'ahooks', 'tailwind-merge', 'comlink', '@tanstack/react-virtual'],
+        },
+      },
+    },
   },
 }

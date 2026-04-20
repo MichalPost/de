@@ -14,6 +14,32 @@ export interface BarcodeOptions {
   margin?: number
 }
 
+// Module-level LRU cache for data URLs — avoids re-running JsBarcode + toDataURL
+// on every virtual list scroll or re-render. Key encodes all options that affect output.
+const DATA_URL_CACHE = new Map<string, string>()
+const DATA_URL_CACHE_MAX = 500
+
+function dataUrlCacheKey(text: string, options: BarcodeOptions): string {
+  return `${text}|${options.width ?? 2}|${options.height ?? 80}|${options.displayValue ?? true}|${options.fontSize ?? 14}|${options.margin ?? 10}`
+}
+
+function dataUrlCacheGet(key: string): string | undefined {
+  return DATA_URL_CACHE.get(key)
+}
+
+function dataUrlCacheSet(key: string, value: string): void {
+  if (DATA_URL_CACHE.size >= DATA_URL_CACHE_MAX) {
+    // Evict oldest entry (Map preserves insertion order)
+    DATA_URL_CACHE.delete(DATA_URL_CACHE.keys().next().value!)
+  }
+  DATA_URL_CACHE.set(key, value)
+}
+
+/** Clear the data URL cache (e.g. after a theme change that affects barcode colours). */
+export function clearBarcodeDataUrlCache(): void {
+  DATA_URL_CACHE.clear()
+}
+
 /**
  * Render a Code128 barcode directly to an HTMLCanvasElement.
  * Returns the canvas — no SVG involved, no conversion needed.
@@ -43,9 +69,15 @@ export function renderBarcodeToCanvas(
 
 /**
  * Get a data URL (PNG) from a barcode canvas.
+ * Results are cached by (text + options) — safe to call on every render.
  */
 export function barcodeToPngDataUrl(text: string, options: BarcodeOptions = {}): string {
-  return renderBarcodeToCanvas(text, options).toDataURL('image/png')
+  const key = dataUrlCacheKey(text, options)
+  const cached = dataUrlCacheGet(key)
+  if (cached !== undefined) return cached
+  const url = renderBarcodeToCanvas(text, options).toDataURL('image/png')
+  dataUrlCacheSet(key, url)
+  return url
 }
 
 /**
