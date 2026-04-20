@@ -30,19 +30,15 @@ export const sharedViteConfig = {
     cssMinify: 'lightningcss' as const,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core React runtime — cached aggressively, changes rarely
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          // PDF engine is large (~1MB+); split so it only loads on demand
-          'vendor-pdf': ['@react-pdf/renderer', 'jspdf', 'svg2pdf.js'],
-          // Canvas-based export; separate from PDF path
-          'vendor-canvas': ['html2canvas'],
-          // Barcode libs including WASM binary — heaviest single chunk
-          'vendor-barcode': ['jsbarcode', 'zxing-wasm'],
-          // Form validation stack
-          'vendor-form': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          // UI utilities — small but frequently updated
-          'vendor-ui': ['motion', 'zustand', 'ahooks', 'tailwind-merge', 'comlink', '@tanstack/react-virtual'],
+        // Vite 8 (rolldown) requires manualChunks as a function, not an object
+        manualChunks: (id: string) => {
+          if (!id.includes('node_modules')) return
+          if (id.includes('@react-pdf') || id.includes('jspdf') || id.includes('svg2pdf')) return 'vendor-pdf'
+          if (id.includes('html2canvas')) return 'vendor-canvas'
+          if (id.includes('jsbarcode') || id.includes('zxing-wasm')) return 'vendor-barcode'
+          if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('/zod/')) return 'vendor-form'
+          if (id.includes('motion') || id.includes('zustand') || id.includes('ahooks') || id.includes('tailwind-merge') || id.includes('comlink') || id.includes('@tanstack')) return 'vendor-ui'
+          if (id.includes('react-dom') || id.includes('react-router') || id.includes('/react/')) return 'vendor-react'
         },
       },
     },

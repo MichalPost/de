@@ -37,8 +37,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ steps.version.outputs.tag }}
-          git push origin ${{ steps.version.outputs.tag }}
+          # Skip if tag already exists (e.g. re-run on same day)
+          git tag ${{ steps.version.outputs.tag }} 2>/dev/null || echo "Tag already exists, skipping"
+          git push origin ${{ steps.version.outputs.tag }} 2>/dev/null || echo "Tag already on remote, skipping"
 
       - name: 创建 GitHub Release
         id: create_release
