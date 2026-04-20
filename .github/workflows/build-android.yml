@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: 检出代码
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: 配置 Node.js & pnpm
         uses: ./.github/actions/setup-node-pnpm
@@ -71,7 +71,7 @@ jobs:
           git push origin ${{ env.TAG }} 2>/dev/null || echo "Tag already on remote, skipping"
 
       - name: 发布到 GitHub Releases
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.3.3
         with:
           tag_name: ${{ env.TAG }}
           name: ChemTools Android ${{ env.TAG }}

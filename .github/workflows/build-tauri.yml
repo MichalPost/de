@@ -43,7 +43,7 @@ jobs:
 
       - name: 创建 GitHub Release
         id: create_release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.3.3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ChemTools ${{ steps.version.outputs.tag }}
@@ -74,7 +74,7 @@ jobs:
 
     steps:
       - name: 检出代码
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: 配置 Node.js & pnpm
         uses: ./.github/actions/setup-node-pnpm
