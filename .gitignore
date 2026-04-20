@@ -24,3 +24,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Literal ~ directory created by Windows path expansion bug
+~/
+~
