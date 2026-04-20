@@ -174,8 +174,8 @@ function createSubKeys(keyBytes: Uint8Array): Uint8Array[] {
   if (cached) return cached
 
   const keyBits = permute(bytesToBits(keyBytes), PC1)
-  let left = keyBits.slice(0, 28)
-  let right = keyBits.slice(28)
+  let left = keyBits.subarray(0, 28)
+  let right = keyBits.subarray(28)
   const subKeys: Uint8Array[] = []
 
   for (const shift of SHIFTS) {
@@ -217,8 +217,8 @@ function desBlock(blockBytes: Uint8Array, keyBytes: Uint8Array, decrypt = false)
   const subKeys = createSubKeys(keyBytes)
   const roundKeys = decrypt ? subKeys.slice().reverse() : subKeys
   const dataBits = permute(bytesToBits(blockBytes), IP)
-  let left = dataBits.slice(0, 32)
-  let right = dataBits.slice(32)
+  let left = dataBits.subarray(0, 32)
+  let right = dataBits.subarray(32)
 
   for (const subKey of roundKeys) {
     const expanded = permute(right, EXPANSION)
@@ -241,8 +241,8 @@ export function encrypt3DESBlock(blockBytes: Uint8Array, keyBytes: Uint8Array): 
     throw new Error('3DES requires a 16-byte key.')
   }
 
-  const leftKey = keyBytes.slice(0, 8)
-  const rightKey = keyBytes.slice(8, 16)
+  const leftKey = keyBytes.subarray(0, 8)
+  const rightKey = keyBytes.subarray(8, 16)
   return desBlock(desBlock(desBlock(blockBytes, leftKey, false), rightKey, true), leftKey, false)
 }
 
@@ -251,8 +251,8 @@ export function decrypt3DESBlock(blockBytes: Uint8Array, keyBytes: Uint8Array): 
     throw new Error('3DES requires a 16-byte key.')
   }
 
-  const leftKey = keyBytes.slice(0, 8)
-  const rightKey = keyBytes.slice(8, 16)
+  const leftKey = keyBytes.subarray(0, 8)
+  const rightKey = keyBytes.subarray(8, 16)
   return desBlock(desBlock(desBlock(blockBytes, leftKey, true), rightKey, false), leftKey, true)
 }
 
@@ -267,7 +267,7 @@ export function process3DESBytes(dataBytes: Uint8Array, keyBytes: Uint8Array, de
 
   const output = new Uint8Array(padded.length)
   for (let index = 0; index < padded.length; index += 8) {
-    const block = padded.slice(index, index + 8)
+    const block = padded.subarray(index, index + 8)
     const transformed = decrypt ? decrypt3DESBlock(block, keyBytes) : encrypt3DESBlock(block, keyBytes)
     output.set(transformed, index)
   }
