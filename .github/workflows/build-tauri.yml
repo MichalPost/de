@@ -30,10 +30,13 @@ jobs:
       - name: 生成版本号
         id: version
         run: |
-          MONTH=$(date +'%-m' 2>/dev/null || date +'%m' | sed 's/^0//')
-          DAY=$(date +'%-d' 2>/dev/null || date +'%d' | sed 's/^0//')
-          YEAR=$(date +'%y')
-          VERSION="${YEAR}.${MONTH}.${DAY}"
+          MONTH_DAY=$(date +'%Y.%-m%d' 2>/dev/null || python - <<'PY'
+from datetime import datetime
+now = datetime.utcnow()
+print(f"{now.year}.{now.month}{now.day:02d}")
+PY
+          )
+          VERSION="${MONTH_DAY}.${GITHUB_RUN_NUMBER}"
           TAG="v${VERSION}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
