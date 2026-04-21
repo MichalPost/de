@@ -6,17 +6,22 @@ const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '
 const IS_TAURI = '__TAURI_INTERNALS__' in window
 
 function DesktopUpdateSection() {
-  const [status, setStatus] = useState<'idle' | 'checking' | 'found' | 'up-to-date' | 'installing'>('idle')
+  const [status, setStatus] = useState<'idle' | 'checking' | 'found' | 'up-to-date' | 'installing' | 'error'>('idle')
   const [newVersion, setNewVersion] = useState<string>()
   const [installFn, setInstallFn] = useState<(() => Promise<void>) | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string>()
 
   const handleCheck = async () => {
     setStatus('checking')
+    setErrorMessage(undefined)
     const result = await checkForUpdate()
     if (result.available && result.install) {
       setNewVersion(result.version)
       setInstallFn(() => result.install!)
       setStatus('found')
+    } else if (result.error) {
+      setStatus('error')
+      setErrorMessage(result.error)
     } else {
       setStatus('up-to-date')
     }
@@ -54,6 +59,11 @@ function DesktopUpdateSection() {
             {status === 'up-to-date' && (
               <span className="text-[12px]" style={{ color: 'var(--success-text)' }}>已是最新</span>
             )}
+            {status === 'error' && (
+              <span className="text-[12px]" style={{ color: 'var(--danger-text)' }} title={errorMessage}>
+                检查失败
+              </span>
+            )}
             <button
               onClick={status === 'found' ? handleInstall : handleCheck}
               disabled={status === 'checking' || status === 'installing'}
@@ -63,7 +73,7 @@ function DesktopUpdateSection() {
               {status === 'checking' && '检查中…'}
               {status === 'installing' && '安装中…'}
               {status === 'found' && '立即安装'}
-              {(status === 'idle' || status === 'up-to-date') && '检查更新'}
+              {(status === 'idle' || status === 'up-to-date' || status === 'error') && '检查更新'}
             </button>
           </div>
         )}

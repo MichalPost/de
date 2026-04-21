@@ -5,6 +5,7 @@ export interface UpdateResult {
   available: boolean
   version?: string
   install?: () => Promise<void>
+  error?: string
 }
 
 /**
@@ -23,7 +24,8 @@ export async function checkForUpdate(): Promise<UpdateResult> {
         await relaunch()
       },
     }
-  } catch {
-    return { available: false }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '检查更新失败'
+    return { available: false, error: message }
   }
 }

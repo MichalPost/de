@@ -55,7 +55,7 @@ jobs:
           body: |
             自动构建版本 ${{ steps.version.outputs.tag }}
             提交：${{ github.sha }}
-          draft: false
+          draft: true
           prerelease: false
 
   build_desktop:
@@ -297,8 +297,23 @@ jobs:
           files: apps/mobile/ios/build/Build/Products/Debug-iphonesimulator/chemtools-ios-simulator-${{ env.VERSION }}.zip
           fail_on_unmatched_files: true
 
+  publish_release:
+    needs: [prepare, build_desktop, build_android, build_ios]
+    runs-on: ubuntu-latest
+    if: ${{ needs.prepare.result == 'success' && needs.build_desktop.result == 'success' && needs.build_android.result == 'success' }}
+
+    steps:
+      - name: 发布草稿 Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "${{ needs.prepare.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --draft=false \
+            --latest
+
   verify_update_feeds:
-    needs: [prepare, build_desktop, build_android]
+    needs: [prepare, publish_release]
     runs-on: ubuntu-latest
 
     steps:
@@ -335,7 +350,7 @@ jobs:
           grep -F "\"version\": \"$MOBILE_VERSION\"" latest-mobile.json
 
   summary:
-    needs: [prepare, build_desktop, build_android, build_ios, verify_update_feeds]
+    needs: [prepare, build_desktop, build_android, build_ios, publish_release, verify_update_feeds]
     runs-on: ubuntu-latest
     if: ${{ always() }}
 
