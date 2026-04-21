@@ -5,6 +5,7 @@ import { calculateShift, type ShiftInput, type ShiftResult, type BaseType, type 
 import { ZapIcon } from '../ui/icons'
 import { useToast } from '../ui/Toast'
 import { InlineChoiceGroup } from '../ui/InlineChoiceGroup'
+import { InputField } from '../ui/Field'
 
 const BASE_OPTIONS: { value: BaseType; label: string }[] = [
   { value: '10', label: '10进制 (dec)' },
@@ -16,15 +17,9 @@ const SHIFT_OPTIONS = [{ value: 12 }, { value: 10 }]
 
 function ResultRow({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
   return (
-    <div
-      className="flex items-center justify-between px-5 h-11 border-b last:border-b-0"
-      style={{ borderColor: 'var(--border)' }}
-    >
-      <span className="text-[13px]" style={{ color: 'var(--text-secondary)' }}>{label}</span>
-      <span
-        className="text-[13px] font-mono"
-        style={{ color: highlight ? 'var(--accent-text)' : 'var(--text-muted)', fontWeight: highlight ? 600 : 400 }}
-      >
+    <div className="flex h-11 items-center justify-between border-b border-ct-border px-5 last:border-b-0">
+      <span className="text-[13px] text-ct-content-secondary">{label}</span>
+      <span className={highlight ? 'text-[13px] font-mono font-semibold text-ct-brand-foreground' : 'text-[13px] font-mono text-ct-content-muted'}>
         {value === '' || value === undefined ? '—' : String(value)}
       </span>
     </div>
@@ -71,28 +66,26 @@ export function BitShiftPage() {
         <CardHeader tag={{ label: 'SHIFT', color: 'indigo' }} title="参数输入" />
         <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
           {error
-            ? <StatusBar color="indigo"><span style={{ color: 'var(--error-text)' }}>{error}</span></StatusBar>
+            ? <StatusBar color="indigo"><span className="text-ct-danger-foreground">{error}</span></StatusBar>
             : <StatusBar color="indigo">选择进制和移位方式后点击计算，结果将同步显示。</StatusBar>
           }
 
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
-            {/* 原数 */}
-            <label className="flex flex-col gap-1 col-span-2 sm:col-span-1">
-              <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>原数</span>
-              <input
+            <div className="col-span-2 sm:col-span-1">
+              <InputField
+                label="原数"
+                id="bit-shift-number"
                 type="text"
                 value={number}
-                onChange={e => setNumber(e.target.value)}
+                onChange={setNumber}
                 onKeyDown={handleKeyDown}
                 placeholder="请输入数字"
-                className="h-11 px-3 rounded-xl border text-[13px] font-mono outline-none transition-colors focus:ring-2"
-                style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
+                mono
               />
-            </label>
+            </div>
 
-            {/* 原数类型 */}
             <label className="flex flex-col gap-1">
-              <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>原数类型</span>
+              <span className="text-[11px] font-medium text-ct-content-muted">原数类型</span>
               <InlineChoiceGroup
                 options={BASE_OPTIONS}
                 value={base}
@@ -100,9 +93,8 @@ export function BitShiftPage() {
               />
             </label>
 
-            {/* 移位数 */}
             <label className="flex flex-col gap-1">
-              <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>移位数</span>
+              <span className="text-[11px] font-medium text-ct-content-muted">移位数</span>
               <InlineChoiceGroup
                 options={SHIFT_OPTIONS.map((o) => ({ value: String(o.value), label: String(o.value) }))}
                 value={String(shift)}
@@ -110,9 +102,8 @@ export function BitShiftPage() {
               />
             </label>
 
-            {/* 计算方式 */}
             <label className="flex flex-col gap-1">
-              <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>计算方式</span>
+              <span className="text-[11px] font-medium text-ct-content-muted">计算方式</span>
               <InlineChoiceGroup
                 options={[
                   { value: '>>', label: '右移 (>>)' },
@@ -123,9 +114,8 @@ export function BitShiftPage() {
               />
             </label>
 
-            {/* 新位补数 */}
             <label className="flex flex-col gap-1">
-              <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>新位补数</span>
+              <span className="text-[11px] font-medium text-ct-content-muted">新位补数</span>
               <InlineChoiceGroup
                 options={[
                   { value: '0', label: '补 0' },
@@ -137,13 +127,13 @@ export function BitShiftPage() {
             </label>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto] gap-2 items-stretch">
-            <Button variant="ghost" size="md" onClick={() => { setShift(10); calculate(10) }} className="w-full justify-center">仪器</Button>
-            <Button variant="ghost" size="md" onClick={() => { setShift(12); calculate(12) }} className="w-full justify-center">试剂包</Button>
-            <Button variant="primary" size="md" onClick={() => calculate()} className="col-span-2 sm:col-span-1 w-full justify-center">
+          <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto]">
+            <Button variant="ghost" size="md" onClick={() => { setShift(10); calculate(10) }} className="justify-center" fullWidth>仪器</Button>
+            <Button variant="ghost" size="md" onClick={() => { setShift(12); calculate(12) }} className="justify-center" fullWidth>试剂包</Button>
+            <Button variant="primary" size="md" onClick={() => calculate()} className="col-span-2 sm:col-span-1 justify-center" fullWidth>
               <ZapIcon /> 计算
             </Button>
-            <Button variant="ghost" size="md" onClick={clear} className="w-full justify-center">清除</Button>
+            <Button variant="ghost" size="md" onClick={clear} className="justify-center" fullWidth>清除</Button>
           </div>
         </div>
       </Card>

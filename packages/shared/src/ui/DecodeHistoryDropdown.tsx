@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useDecodeHistoryStore, type DecodeHistoryEntry } from '../store/decodeHistoryStore'
+import { twMerge } from 'tailwind-merge'
 
 interface Props {
   onSelect: (raw: string) => void
@@ -13,23 +14,11 @@ export function DecodeHistoryDropdown({ onSelect }: Props) {
   if (entries.length === 0) return null
 
   return (
-    <div className="relative">
+    <div className="relative z-50">
       <button
+        type="button"
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] transition-colors cursor-pointer"
-        style={{
-          borderColor: 'var(--border)',
-          backgroundColor: 'var(--bg-input)',
-          color: 'var(--text-secondary)',
-        }}
-        onMouseEnter={e => {
-          (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'
-          ;(e.currentTarget as HTMLElement).style.color = 'var(--accent-text)'
-        }}
-        onMouseLeave={e => {
-          (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'
-          ;(e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
-        }}
+        className="flex items-center gap-1.5 rounded-lg border border-ct-border bg-ct-surface-input px-2.5 py-1 text-[11px] text-ct-content-secondary transition-[background-color,border-color,color] duration-200 hover:border-ct-brand hover:text-ct-brand-foreground"
       >
         <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -41,23 +30,20 @@ export function DecodeHistoryDropdown({ onSelect }: Props) {
       <AnimatePresence>
         {open && (
           <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
             <motion.div
               initial={{ opacity: 0, y: -4, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -4, scale: 0.97 }}
               transition={{ duration: 0.12 }}
-              className="absolute left-0 top-full mt-1 z-20 w-[340px] rounded-xl border overflow-hidden shadow-lg"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
+              className="absolute left-0 top-full z-[60] mt-1 w-[340px] overflow-hidden rounded-xl border border-ct-border bg-ct-surface-card shadow-[var(--shadow-md)]"
             >
-              <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
-                <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>最近解码</span>
+              <div className="flex items-center justify-between border-b border-ct-border px-3 py-2">
+                <span className="text-[11px] font-semibold uppercase tracking-widest text-ct-content-muted">最近解码</span>
                 <button
+                  type="button"
                   onClick={() => { clearAll(); setOpen(false) }}
-                  className="text-[11px] transition-colors cursor-pointer"
-                  style={{ color: 'var(--text-muted)' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--error-text)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                  className="text-[11px] text-ct-content-muted transition-colors hover:text-ct-danger-foreground"
                 >清空</button>
               </div>
               <div className="max-h-64 overflow-auto">
@@ -86,22 +72,21 @@ function HistoryRow({ entry, onSelect, onDelete }: {
 
   return (
     <div
-      className="group flex items-center gap-2 px-3 py-2 transition-colors"
-      onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-      onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+      className="group flex items-center gap-2 px-3 py-2 transition-colors hover:bg-ct-surface-hover"
     >
-      <button onClick={onSelect} className="flex-1 min-w-0 text-left cursor-pointer">
-        <div className="text-[12px] font-mono truncate" style={{ color: 'var(--text-primary)' }}>{entry.raw}</div>
-        <div className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+      <button type="button" onClick={onSelect} className="min-w-0 flex-1 cursor-pointer text-left">
+        <div className="truncate text-[12px] font-mono text-ct-content-primary">{entry.raw}</div>
+        <div className="mt-0.5 text-[10px] text-ct-content-muted">
           {timeStr} · 编号 {entry.reagentId} · 序号 {entry.serialNumber} · 客户 {entry.customerId}
         </div>
       </button>
       <button
+        type="button"
         onClick={onDelete}
-        className="shrink-0 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center rounded transition-all cursor-pointer text-[11px]"
-        style={{ color: 'var(--text-muted)' }}
-        onMouseEnter={e => (e.currentTarget.style.color = 'var(--error-text)')}
-        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+        className={twMerge(
+          'flex h-5 w-5 shrink-0 items-center justify-center rounded text-[11px] text-ct-content-muted opacity-0 transition-all',
+          'group-hover:opacity-100 hover:text-ct-danger-foreground',
+        )}
       >✕</button>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { InputField, NumberField } from './Field'
 
 interface Props {
   agentValue: string
@@ -17,8 +18,6 @@ function parseCustomerCode(raw: string): { agentId: number; customerId: number }
   if (plainMatch) return { agentId: parseInt(plainMatch[1], 10), customerId: parseInt(plainMatch[2], 10) }
   return null
 }
-
-const inputCls = 'h-9 w-full px-3 rounded-xl border text-[13px] font-mono outline-none transition-colors focus:ring-2'
 
 export function CustomerCodeInput({
   agentValue, customerValue, onAgentChange, onCustomerChange,
@@ -44,63 +43,57 @@ export function CustomerCodeInput({
 
   return (
     <div
-      className="p-3 rounded-xl border flex flex-col gap-2"
-      style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)' }}
+      className="flex flex-col gap-2 rounded-xl border border-ct-border bg-ct-surface-input p-3"
     >
-      <p className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
+      <p className="text-[11px] font-semibold tracking-widest uppercase text-ct-content-muted">
         客户码快捷填入
       </p>
       <div className="flex flex-col gap-3">
-        {/* Quick input */}
         <div className="flex flex-col gap-1 flex-1 min-w-0">
-          <label htmlFor="customerCodeQuick" className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-            客户码 <span style={{ color: 'var(--text-faint)' }}>（0000.01234 或 000012345）</span>
+          <label htmlFor="customerCodeQuick" className="text-[11px] text-ct-content-muted">
+            客户码 <span className="text-ct-content-faint">（0000.01234 或 000012345）</span>
           </label>
           <div className="relative">
-            <input
+            <InputField
               id="customerCodeQuick"
               type="text"
               value={code}
-              onChange={e => handle(e.target.value)}
+              onChange={handle}
               placeholder="0000.01234"
-              className={inputCls}
-              style={{
-                backgroundColor: 'var(--bg-card)',
-                borderColor: error ? 'var(--error)' : ok ? 'var(--success)' : 'var(--border-input)',
-                color: 'var(--text-primary)',
-              }}
+              className={error ? 'border-ct-danger bg-ct-danger-soft' : ok ? 'border-ct-success bg-ct-surface-card' : 'bg-ct-surface-card'}
+              mono
+              label=""
             />
             {ok && (
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--success-text)' }}>
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ct-success-foreground">
                 <CheckIcon />
               </span>
             )}
           </div>
-          {error && <p className="text-[11px]" style={{ color: 'var(--error-text)' }}>{error}</p>}
+          {error && <p className="text-[11px] text-ct-danger-foreground">{error}</p>}
         </div>
 
-        {/* Derived fields */}
         <div className="grid grid-cols-2 gap-3 w-full">
-          <label className="flex flex-col gap-1 flex-1">
-            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{agentLabel}</span>
-            <input
-              type="number" min={0} max={9999}
-              value={agentValue}
-              onChange={e => onAgentChange(e.target.value)}
-              className={inputCls}
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-input)', color: 'var(--text-primary)' }}
-            />
-          </label>
-          <label className="flex flex-col gap-1 flex-1">
-            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{customerLabel}</span>
-            <input
-              type="number" min={0} max={99999}
-              value={customerValue}
-              onChange={e => onCustomerChange(e.target.value)}
-              className={inputCls}
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-input)', color: 'var(--text-primary)' }}
-            />
-          </label>
+          <NumberField
+            label={agentLabel}
+            id="customer-code-agent"
+            min={0}
+            max={9999}
+            value={agentValue}
+            onChange={onAgentChange}
+            className="bg-ct-surface-card"
+            mono
+          />
+          <NumberField
+            label={customerLabel}
+            id="customer-code-customer"
+            min={0}
+            max={99999}
+            value={customerValue}
+            onChange={onCustomerChange}
+            className="bg-ct-surface-card"
+            mono
+          />
         </div>
       </div>
     </div>

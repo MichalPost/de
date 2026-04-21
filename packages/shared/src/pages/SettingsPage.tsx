@@ -5,6 +5,8 @@ import { useToast } from '../ui/Toast'
 import { DownloadIcon, UploadIcon } from '../ui/icons'
 import type { TemplateDefinition } from '../features/batch/types'
 import { usePlatformOps } from '../lib/platformOps'
+import { Button } from '../ui/Button'
+import { Card } from '../ui/Card'
 import {
   DEFAULT_PDF_BARCODE_SCALE,
   MAX_PDF_BARCODE_SCALE,
@@ -60,23 +62,17 @@ export function SettingsPage({ updateSection }: SettingsPageProps = {}) {
     reader.readAsText(file)
   }
 
-  const cardStyle: React.CSSProperties = {
-    backgroundColor: 'var(--bg-card)',
-    borderColor: 'var(--border)',
-    boxShadow: 'var(--shadow-sm)',
-  }
-
   return (
     <div className="p-4 md:p-6 max-w-xl mx-auto flex flex-col gap-6">
-      <section className="rounded-2xl border p-5 flex flex-col gap-4" style={cardStyle}>
+      <Card className="flex flex-col gap-4 p-5 shadow-[var(--shadow-sm)]">
         <div>
-          <p className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>PDF 条码占比</p>
-          <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-[14px] font-semibold text-ct-content-primary">PDF 条码占比</p>
+          <p className="mt-1 text-[12px] text-ct-content-muted">
             调整导出 PDF 时条码在 A4 页面的占比。当前为 {pdfBarcodeScale}%。
           </p>
         </div>
 
-        <div className="rounded-xl border p-4 flex flex-col gap-3" style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)' }}>
+        <div className="flex flex-col gap-3 rounded-xl border border-ct-border bg-ct-surface-input p-4">
           <div className="flex items-center gap-3">
             <input
               type="range"
@@ -85,61 +81,52 @@ export function SettingsPage({ updateSection }: SettingsPageProps = {}) {
               step={1}
               value={pdfBarcodeScale}
               onChange={(e) => setPdfBarcodeScale(Number(e.target.value))}
-              className="flex-1"
+              className="flex-1 accent-[var(--brand)]"
             />
-            <div
-              className="min-w-[64px] h-9 rounded-xl border flex items-center justify-center text-[13px] font-medium"
-              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-input)', color: 'var(--text-primary)' }}
-            >
+            <div className="flex h-10 min-w-[72px] items-center justify-center rounded-xl border border-ct-border-input bg-ct-surface-card text-[13px] font-medium text-ct-content-primary">
               {pdfBarcodeScale}%
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
               onClick={() => setPdfBarcodeScale(DEFAULT_PDF_BARCODE_SCALE)}
-              className="h-8 px-3 rounded-lg border text-[12px] cursor-pointer transition-colors"
-              style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)', borderColor: 'var(--border)' }}
+              variant="ghost"
+              size="sm"
             >
               恢复默认
-            </button>
-            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            </Button>
+            <span className="text-[11px] text-ct-content-muted">
               建议区间 {DEFAULT_PDF_BARCODE_SCALE - 6}% - {DEFAULT_PDF_BARCODE_SCALE + 8}%。
             </span>
           </div>
         </div>
-      </section>
+      </Card>
 
-      <section className="rounded-2xl border p-5 flex flex-col gap-4" style={cardStyle}>
+      <Card className="flex flex-col gap-4 p-5 shadow-[var(--shadow-sm)]">
         <div>
-          <p className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>模板备份</p>
-          <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-[14px] font-semibold text-ct-content-primary">模板备份</p>
+          <p className="mt-1 text-[12px] text-ct-content-muted">
             导出为 JSON 文件保存到本地，换电脑时导入恢复。当前共 {templates.length} 个模板。
           </p>
         </div>
 
-        <div className="flex gap-3">
-          <button
+        <div className="flex flex-wrap gap-3">
+          <Button
             onClick={handleExport}
-            className="flex items-center gap-2 h-9 px-4 rounded-xl text-[13px] font-medium border transition-colors cursor-pointer"
-            style={{ backgroundColor: 'var(--accent)', color: '#fff', borderColor: 'transparent' }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+            variant="primary"
           >
             <DownloadIcon className="w-4 h-4" />
             导出模板
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 h-9 px-4 rounded-xl text-[13px] font-medium border transition-colors cursor-pointer"
-            style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)' }}
-            onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'var(--bg-input)')}
+            variant="default"
           >
             <UploadIcon className="w-4 h-4" />
             导入模板
-          </button>
+          </Button>
 
           <input
             ref={fileInputRef}
@@ -150,10 +137,10 @@ export function SettingsPage({ updateSection }: SettingsPageProps = {}) {
           />
         </div>
 
-        <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+        <p className="text-[11px] text-ct-content-muted">
           导入时会追加到现有模板，不会覆盖。
         </p>
-      </section>
+      </Card>
 
       {updateSection}
     </div>

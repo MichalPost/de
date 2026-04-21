@@ -1,7 +1,16 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState, type CSSProperties } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
+import { twMerge } from 'tailwind-merge'
 import { Card, CardHeader, StatusBar } from '../ui/Card'
-import { Button } from '../ui/Field'
+import { Button } from '../ui/Button'
+import { NumberField } from '../ui/Field'
+import { PanelHeader } from '../ui/PanelHeader'
+import { TemplateActionButton } from '../ui/TemplateActionButton'
+import { ToolbarActionButton } from '../ui/ToolbarActionButton'
+import { ToolbarIconButton } from '../ui/ToolbarIconButton'
+import { ToolbarSection, ToolbarSpacer } from '../ui/ToolbarLayout'
+import { ToolbarPageStepper } from '../ui/ToolbarPageStepper'
+import { ToolbarSearchField } from '../ui/ToolbarSearchField'
 import { CustomerCodeInput } from '../ui/CustomerCodeInput'
 import { createTemplate, getDefaultTemplateDefinition } from '../features/batch/templateStore'
 import { buildBatchCodes, parseReagentIds } from '../features/batch/batchEngine'
@@ -11,6 +20,7 @@ import { BatchHistoryPanel } from '../features/batch/BatchHistoryPanel'
 import { PrintLayout } from '../features/batch/PrintLayout'
 import { useResultFilter } from '../features/batch/useResultFilter'
 import { useCopyAsync } from '../ui/CopyButton'
+import { SegmentedControl } from '../ui/SegmentedControl'
 import { useToast } from '../ui/Toast'
 import { useTemplateStore } from '../store/templateStore'
 import { useBatchDataStore } from '../store/batchDataStore'
@@ -29,6 +39,34 @@ type ViewMode = 'preview' | 'print'
 interface BatchPageProps {
   /** Optional Comlink-wrapped worker. When provided, batch generation runs off the main thread. */
   worker?: Remote<BatchWorkerApi>
+}
+
+interface ResultToolbarProps {
+  records: BatchGeneratedRecord[]
+  viewMode: ViewMode
+  printMode: PrintMode
+  printCols: number
+  printPerPage: number
+  currentPage: number
+  totalPages: number
+  copyImageState: ReturnType<typeof useCopyAsync>
+  onViewMode: (v: ViewMode) => void
+  onPrintMode: (v: PrintMode) => void
+  onCols: (n: number) => void
+  onPerPage: (n: number) => void
+  onPage: (p: number | ((prev: number) => number)) => void
+  onCopyImage: () => void
+  onExportPng: () => void
+  onExportPdf: () => void
+}
+
+interface ResultHeaderProps {
+  total: number
+  matchCount: number
+  query: string
+  onQueryChange: (value: string) => void
+  onClearQuery: () => void
+  onOpenHistory: () => void
 }
 
 export function BatchPage({ worker }: BatchPageProps = {}) {
@@ -263,39 +301,30 @@ function TemplatePanel({ templates, activeId, onSelect, onEdit, onDelete, onNew 
           <div
             key={t.id}
             onClick={() => onSelect(t.id)}
-            className="group flex items-center justify-between px-3 py-2.5 rounded-xl border cursor-pointer transition-colors"
-            style={{
-              backgroundColor: t.id === activeId ? 'var(--accent-light)' : 'var(--bg-input)',
-              borderColor: t.id === activeId ? 'var(--accent-border)' : 'var(--border)',
-            }}
-            onMouseEnter={e => { if (t.id !== activeId) (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent-border)' }}
-            onMouseLeave={e => { if (t.id !== activeId) (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+            className={twMerge(
+              'group flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 transition-[background-color,border-color,color] duration-200',
+              t.id === activeId
+                ? 'border-ct-brand-border bg-ct-brand-soft'
+                : 'border-ct-border bg-ct-surface-input hover:border-ct-brand-border',
+            )}
           >
             <div className="flex flex-col gap-0.5 min-w-0">
-              <span
-                className="text-[13px] font-medium truncate"
-                style={{ color: t.id === activeId ? 'var(--accent-text)' : 'var(--text-primary)' }}
-              >{t.name}</span>
-              <span className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>
+              <span className={twMerge('truncate text-[13px] font-medium', t.id === activeId ? 'text-ct-brand-foreground' : 'text-ct-content-primary')}>{t.name}</span>
+              <span className="truncate text-[11px] text-ct-content-muted">
                 {t.genMode === 'serial' ? `序号范围 · 编号 ${t.reagentId} · ${t.genCount} 条` : `编号列表 · ${t.genIdList || '未设置'}`}
               </span>
             </div>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
-              <button
+              <TemplateActionButton
+                label="编辑"
                 onClick={e => { e.stopPropagation(); onEdit(t) }}
-                className="px-2 py-0.5 rounded-md text-[11px] border transition-colors cursor-pointer"
-                style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
-                onMouseEnter={e => { const el = e.currentTarget; el.style.borderColor = 'var(--accent)'; el.style.color = 'var(--accent-text)' }}
-                onMouseLeave={e => { const el = e.currentTarget; el.style.borderColor = 'var(--border)'; el.style.color = 'var(--text-secondary)' }}
-              >编辑</button>
+              />
               {templates.length > 1 && (
-                <button
+                <TemplateActionButton
+                  label="删除"
+                  danger
                   onClick={e => { e.stopPropagation(); onDelete(t.id) }}
-                  className="px-2 py-0.5 rounded-md text-[11px] border transition-colors cursor-pointer"
-                  style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-                  onMouseEnter={e => { const el = e.currentTarget; el.style.borderColor = 'var(--error-border)'; el.style.color = 'var(--error-text)' }}
-                  onMouseLeave={e => { const el = e.currentTarget; el.style.borderColor = 'var(--border)'; el.style.color = 'var(--text-muted)' }}
-                >删除</button>
+                />
               )}
             </div>
           </div>
@@ -319,20 +348,14 @@ function InputPanel({ activeTemplate, agentOverride, customerOverride, serialCou
   running: boolean; error: string | null
   onGenerate: () => void
 }) {
-  const inputStyle: React.CSSProperties = {
-    backgroundColor: 'var(--bg-card)',
-    borderColor: 'var(--border-input)',
-    color: 'var(--text-primary)',
-  }
   return (
     <Card className="md:flex-1 lg:w-[300px] lg:flex-none shrink-0 flex flex-col lg:min-h-0">
       <CardHeader tag={{ label: 'BATCH', color: 'green' }} title="批量输入" />
       <div className="lg:flex-1 lg:overflow-auto p-4 flex flex-col gap-4">
-        <div className="p-3 rounded-xl border flex flex-col items-center text-center gap-1"
-          style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)' }}>
-          <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>当前模板</p>
-          <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>{activeTemplate.name}</p>
-          <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+        <div className="flex flex-col items-center gap-1 rounded-xl border border-ct-border bg-ct-surface-input p-3 text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-ct-content-muted">当前模板</p>
+          <p className="text-[13px] font-medium text-ct-content-primary">{activeTemplate.name}</p>
+          <p className="text-[11px] text-ct-content-muted">
             {activeTemplate.genMode === 'serial'
               ? `编号 ${activeTemplate.reagentId} · 序号 ${activeTemplate.serialNumber}~${activeTemplate.serialNumber + activeTemplate.genCount - 1}`
               : `编号列表 · ${activeTemplate.genIdList || '未设置'}`}
@@ -346,47 +369,51 @@ function InputPanel({ activeTemplate, agentOverride, customerOverride, serialCou
         />
 
         {activeTemplate.genMode === 'serial' && (
-          <div className="flex flex-col gap-2 p-3 rounded-xl border" style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)' }}>
-            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>序号范围</p>
+          <div className="flex flex-col gap-2 rounded-xl border border-ct-border bg-ct-surface-input p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-ct-content-muted">序号范围</p>
             <div className="flex items-center gap-3 flex-wrap">
-              <label className="flex flex-col gap-1">
-                <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>生成数量</span>
-                <input type="number" min={1} max={9999} value={serialCountOverride}
-                  onChange={e => onSerialCountChange(e.target.value)}
-                  placeholder={String(activeTemplate.genCount)}
-                  className="h-9 w-24 px-3 rounded-xl border text-[13px] font-mono outline-none focus:ring-2"
-                  style={inputStyle} />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>有效次（覆盖）</span>
-                <input type="number" min={0} max={65535} value={validUsesOverride}
-                  onChange={e => onValidUsesChange(e.target.value)}
-                  placeholder={String(activeTemplate.validUses)}
-                  className="h-9 w-24 px-3 rounded-xl border text-[13px] font-mono outline-none focus:ring-2"
-                  style={inputStyle} />
-              </label>
-              <span className="text-[12px] pt-4" style={{ color: 'var(--text-muted)' }}>
+              <NumberField
+                label="生成数量"
+                id="batch-serial-count"
+                min={1}
+                max={9999}
+                value={serialCountOverride}
+                onChange={onSerialCountChange}
+                placeholder={String(activeTemplate.genCount)}
+                className="h-9 w-24 rounded-xl bg-ct-surface-card text-[13px]"
+                mono
+              />
+              <NumberField
+                label="有效次（覆盖）"
+                id="batch-valid-uses"
+                min={0}
+                max={65535}
+                value={validUsesOverride}
+                onChange={onValidUsesChange}
+                placeholder={String(activeTemplate.validUses)}
+                className="h-9 w-24 rounded-xl bg-ct-surface-card text-[13px]"
+                mono
+              />
+              <span className="pt-4 text-[12px] text-ct-content-muted">
                 编号 {activeTemplate.reagentId} · 序号 {activeTemplate.serialNumber}~{activeTemplate.serialNumber + Math.max(0, (parseInt(serialCountOverride || String(activeTemplate.genCount), 10) || activeTemplate.genCount) - 1)}
               </span>
             </div>
           </div>
         )}
 
-        {error && <StatusBar color="indigo"><span style={{ color: 'var(--error-text)' }}>{error}</span></StatusBar>}
+        {error && <StatusBar color="indigo"><span className="text-ct-danger-foreground">{error}</span></StatusBar>}
 
-        <label className="flex items-center gap-2 text-[12px]" style={{ color: 'var(--text-secondary)' }}>
+        <label className="flex items-center gap-2 text-[12px] text-ct-content-secondary">
           <input
             type="checkbox"
             checked={preserveOverridesOnTemplateSwitch}
             onChange={(e) => onPreserveOverridesSwitch(e.target.checked)}
-            className="h-4 w-4 rounded"
-            style={{ accentColor: 'var(--success)' }}
+            className="h-4 w-4 rounded accent-[var(--success)]"
           />
           切换模板时保留手工覆盖项
         </label>
 
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-[11px]"
-          style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-muted)' }}>
+        <div className="flex items-center gap-2 rounded-xl bg-ct-surface-input px-3 py-2 text-[11px] text-ct-content-muted">
           <InfoIcon className="w-3.5 h-3.5 shrink-0" />
           留空则使用模板中的代理商和客户编号
         </div>
@@ -430,123 +457,52 @@ function ResultPanel({ records, currentPageRecords, viewMode, printMode, printCo
 
   return (
     <Card className="flex-1 flex flex-col lg:min-h-0 min-w-0">
-      {/* Header */}
-      <div className="flex items-center gap-2 h-[52px] px-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase shrink-0"
-          style={{ backgroundColor: 'var(--warning-light)', color: 'var(--warning-text)' }}>RESULT</span>
-        <span className="text-[15px] font-semibold shrink-0" style={{ color: 'var(--text-primary)' }}>批量结果</span>
-        {total > 0 && (
-          <span className="hidden sm:inline px-2 py-0.5 rounded-full border text-[11px]"
-            style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-            {query && matchCount !== total ? `${matchCount}/${total}` : `${total} 条`}
-          </span>
-        )}
-        <div className="flex-1" />
-        {total > 0 && (
-          <div className="relative">
-            <svg className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3" style={{ color: 'var(--text-muted)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="搜索…"
-              className="h-7 pl-6 pr-3 rounded-lg border text-[12px] outline-none w-28 sm:w-40 focus:w-36 sm:focus:w-52 transition-all"
-              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
-              onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-              onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-            />
-            {query && (
-              <button onClick={() => setQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-[11px]"
-                style={{ color: 'var(--text-muted)' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-              >✕</button>
-            )}
-          </div>
-        )}
-        <button onClick={onOpenHistory}
-          className="flex items-center gap-1 h-7 px-2 rounded-lg border text-[11px] transition-colors cursor-pointer shrink-0"
-          style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-input)', color: 'var(--text-secondary)' }}
-          onMouseEnter={e => { const el = e.currentTarget; el.style.borderColor = 'var(--warning)'; el.style.color = 'var(--warning-text)' }}
-          onMouseLeave={e => { const el = e.currentTarget; el.style.borderColor = 'var(--border)'; el.style.color = 'var(--text-secondary)' }}
-        >
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span className="hidden sm:inline">历史</span>
-        </button>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex items-center gap-1.5 flex-wrap px-3 py-2 border-b" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-subtle)' }}>
-        <ToggleGroup
-          options={[{ value: 'preview', label: '预览' }, { value: 'print', label: '打印' }]}
-          value={viewMode} onChange={onViewMode as (v: string) => void}
-          activeStyle={{ backgroundColor: 'var(--accent)', color: '#fff' }}
-        />
-        <ToggleGroup
-          options={[{ value: 'auto', label: '模板' }, { value: 'long', label: '长码' }, { value: 'short', label: '短码' }, { value: 'both', label: '双码' }]}
-          value={printMode} onChange={onPrintMode as (v: string) => void}
-          activeStyle={{ backgroundColor: 'var(--text-primary)', color: 'var(--bg-app)' }}
-        />
-        <div className="flex items-center gap-1 text-[11px]">
-          <span style={{ color: 'var(--text-muted)' }}>列</span>
-          <ToggleGroup options={[1,2,3].map(c => ({ value: String(c), label: String(c) }))}
-            value={String(printCols)} onChange={v => onCols(Number(v))}
-            activeStyle={{ backgroundColor: 'var(--accent)', color: '#fff' }} itemClass="w-7" />
-        </div>
-        <div className="flex items-center gap-1 text-[11px]">
-          <span style={{ color: 'var(--text-muted)' }}>每页</span>
-          <ToggleGroup options={[5,10,20].map(n => ({ value: String(n), label: String(n) }))}
-            value={String(printPerPage)} onChange={v => onPerPage(Number(v))}
-            activeStyle={{ backgroundColor: 'var(--accent)', color: '#fff' }} />
-        </div>
-        {records.length > 0 && (
-          <div className="flex items-center gap-1 text-[11px]">
-            <button onClick={() => onPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}
-              className="w-7 h-7 flex items-center justify-center rounded-lg border transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)' }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'var(--bg-card)')}
-            >‹</button>
-            <span className="px-1 tabular-nums" style={{ color: 'var(--text-muted)' }}>{currentPage + 1}/{totalPages}</span>
-            <button onClick={() => onPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}
-              className="w-7 h-7 flex items-center justify-center rounded-lg border transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)' }}
-              onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-              onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'var(--bg-card)')}
-            >›</button>
-          </div>
-        )}
-        <div className="flex-1" />
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {copyImageState.copied ? (
-            <button
-              onClick={onCopyImage}
-              className="inline-flex items-center gap-1.5 rounded-full font-medium border px-2.5 py-1 text-[11px] cursor-pointer"
-              style={{ backgroundColor: 'var(--success-light)', color: 'var(--success-text)', borderColor: 'var(--success-border)' }}
-            ><CheckIcon /> 已复制</button>
-          ) : (
-            <Button variant="ghost" size="sm" onClick={onCopyImage}
-              className={`${records.length === 0 ? 'opacity-40 pointer-events-none' : ''} ${copyImageState.copying ? 'opacity-60 pointer-events-none' : ''}`}>
-              <CopyImgIcon /> <span className="hidden sm:inline">{copyImageState.copying ? '复制中…' : '复制长图'}</span>
-            </Button>
-          )}
-          <Button variant="ghost" size="sm" onClick={onExportPng} className={records.length === 0 ? 'opacity-40 pointer-events-none' : ''}><ImageIcon /> <span className="hidden sm:inline">导出长图</span></Button>
-          <Button variant="primary" size="sm" onClick={onExportPdf} className={records.length === 0 ? 'opacity-40 pointer-events-none' : ''}><FileTextIcon /> <span className="hidden sm:inline">导出 PDF</span></Button>
-        </div>
-      </div>
+      <ResultHeader
+        total={total}
+        matchCount={matchCount}
+        query={query}
+        onQueryChange={setQuery}
+        onClearQuery={() => setQuery('')}
+        onOpenHistory={onOpenHistory}
+      />
+      <ResultToolbar
+        records={records}
+        viewMode={viewMode}
+        printMode={printMode}
+        printCols={printCols}
+        printPerPage={printPerPage}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        copyImageState={copyImageState}
+        onViewMode={onViewMode}
+        onPrintMode={onPrintMode}
+        onCols={onCols}
+        onPerPage={onPerPage}
+        onPage={onPage}
+        onCopyImage={onCopyImage}
+        onExportPng={onExportPng}
+        onExportPdf={onExportPdf}
+      />
 
       {/* Content */}
       {records.length === 0 ? (
-        <div className="flex items-center justify-center h-40 text-[13px]" style={{ color: 'var(--text-muted)' }}>输入编号列表后点击批量生成</div>
+        <div className="flex h-40 items-center justify-center text-[13px] text-ct-content-muted">输入编号列表后点击批量生成</div>
       ) : filtered.length === 0 ? (
-        <div className="flex items-center justify-center h-40 text-[13px]" style={{ color: 'var(--text-muted)' }}>没有匹配 "{query}" 的结果</div>
+        <div className="flex h-40 items-center justify-center text-[13px] text-ct-content-muted">没有匹配 "{query}" 的结果</div>
       ) : viewMode === 'preview' ? (
         <div ref={parentRef} className="lg:flex-1 lg:overflow-auto p-4">
-          <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+          <div
+            className="relative h-[var(--virtual-total-size)]"
+            style={{ '--virtual-total-size': `${virtualizer.getTotalSize()}px` } as CSSProperties}
+          >
             {virtualizer.getVirtualItems().map(vItem => (
-              <div key={vItem.key} data-index={vItem.index}
+              <div
+                key={vItem.key}
+                data-index={vItem.index}
                 ref={virtualizer.measureElement}
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${vItem.start}px)`, paddingBottom: 12 }}>
+                className="absolute top-0 left-0 w-full translate-y-[var(--virtual-offset)] pb-3"
+                style={{ '--virtual-offset': `${vItem.start}px` } as CSSProperties}
+              >
                 <BatchResultCard record={filtered[vItem.index]} index={vItem.index} />
               </div>
             ))}
@@ -554,7 +510,7 @@ function ResultPanel({ records, currentPageRecords, viewMode, printMode, printCo
         </div>
       ) : (
         <div className="lg:flex-1 lg:overflow-auto p-4">
-          <div className="rounded-xl overflow-hidden border" style={{ borderColor: 'var(--border)' }}>
+          <div className="overflow-hidden rounded-xl border border-ct-border">
             <PrintLayout records={currentPageRecords} globalMode={effectiveMode} cols={printCols} perPage={printPerPage} />
           </div>
         </div>
@@ -563,24 +519,152 @@ function ResultPanel({ records, currentPageRecords, viewMode, printMode, printCo
   )
 }
 
-// ── ToggleGroup ───────────────────────────────────────────────────────────────
-function ToggleGroup({ options, value, onChange, activeStyle, itemClass = '' }: {
-  options: { value: string; label: string }[]
-  value: string
-  onChange: (v: string) => void
-  activeStyle: React.CSSProperties
-  itemClass?: string
-}) {
+function ResultHeader({
+  total,
+  matchCount,
+  query,
+  onQueryChange,
+  onClearQuery,
+  onOpenHistory,
+}: ResultHeaderProps) {
   return (
-    <div className="flex rounded-lg border overflow-hidden text-[11px]" style={{ borderColor: 'var(--border)' }}>
-      {options.map(o => (
-        <button key={o.value} onClick={() => onChange(o.value)}
-          className={`px-2.5 py-1 cursor-pointer transition-colors ${itemClass}`}
-          style={value === o.value ? activeStyle : { backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)' }}
-          onMouseEnter={e => { if (value !== o.value) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)' }}
-          onMouseLeave={e => { if (value !== o.value) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-card)' }}
-        >{o.label}</button>
-      ))}
+    <PanelHeader
+      tag={{ label: 'RESULT', color: 'amber' }}
+      title="批量结果"
+      meta={total > 0 ? (
+        <span className="hidden rounded-full border border-ct-border bg-ct-surface-input px-2 py-0.5 text-[11px] text-ct-content-muted sm:inline">
+          {query && matchCount !== total ? `${matchCount}/${total}` : `${total} 条`}
+        </span>
+      ) : undefined}
+      actions={
+        <>
+        {total > 0 && (
+          <ToolbarSearchField
+            value={query}
+            onChange={onQueryChange}
+            onClear={onClearQuery}
+          />
+        )}
+        <ToolbarIconButton
+          icon={<svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
+          label="历史"
+          accent="warning"
+          onClick={onOpenHistory}
+        />
+        </>
+      }
+    />
+  )
+}
+
+function ResultToolbar({
+  records,
+  viewMode,
+  printMode,
+  printCols,
+  printPerPage,
+  currentPage,
+  totalPages,
+  copyImageState,
+  onViewMode,
+  onPrintMode,
+  onCols,
+  onPerPage,
+  onPage,
+  onCopyImage,
+  onExportPng,
+  onExportPdf,
+}: ResultToolbarProps) {
+  const hasRecords = records.length > 0
+  const disabledClassName = 'opacity-40 pointer-events-none'
+  const busyClassName = 'opacity-60 pointer-events-none'
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 border-b border-ct-border bg-ct-surface-subtle px-3 py-2">
+      <ToolbarSection>
+        <SegmentedControl
+          options={[{ value: 'preview', label: '预览' }, { value: 'print', label: '打印' }]}
+          value={viewMode}
+          onChange={onViewMode as (v: string) => void}
+          className="min-h-8 rounded-lg p-0.75"
+          itemClassName="min-h-7 px-2.5 py-1"
+          activeClassName="bg-ct-brand text-white"
+          ariaLabel="视图模式"
+        />
+        <SegmentedControl
+          options={[{ value: 'auto', label: '模板' }, { value: 'long', label: '长码' }, { value: 'short', label: '短码' }, { value: 'both', label: '双码' }]}
+          value={printMode}
+          onChange={onPrintMode as (v: string) => void}
+          className="min-h-8 rounded-lg p-0.75"
+          itemClassName="min-h-7 px-2.5 py-1"
+          activeClassName="bg-ct-content-primary text-ct-surface-app"
+          ariaLabel="打印模式"
+        />
+        <div className="flex items-center gap-1 text-[11px]">
+          <span className="text-ct-content-muted">列</span>
+          <SegmentedControl
+            options={[1, 2, 3].map(c => ({ value: String(c), label: String(c) }))}
+            value={String(printCols)}
+            onChange={v => onCols(Number(v))}
+            className="min-h-8 rounded-lg p-0.75"
+            itemClassName="min-h-7 w-7 px-0"
+            activeClassName="bg-ct-brand text-white"
+            ariaLabel="打印列数"
+          />
+        </div>
+        <div className="flex items-center gap-1 text-[11px]">
+          <span className="text-ct-content-muted">每页</span>
+          <SegmentedControl
+            options={[5, 10, 20].map(n => ({ value: String(n), label: String(n) }))}
+            value={String(printPerPage)}
+            onChange={v => onPerPage(Number(v))}
+            className="min-h-8 rounded-lg p-0.75"
+            itemClassName="min-h-7 px-2.5 py-1"
+            activeClassName="bg-ct-brand text-white"
+            ariaLabel="每页数量"
+          />
+        </div>
+        {hasRecords && (
+          <ToolbarPageStepper
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPrevious={() => onPage(p => Math.max(0, p - 1))}
+            onNext={() => onPage(p => Math.min(totalPages - 1, p + 1))}
+          />
+        )}
+      </ToolbarSection>
+      <ToolbarSpacer />
+      <ToolbarSection>
+        {copyImageState.copied ? (
+          <ToolbarActionButton
+            icon={<CheckIcon />}
+            label="已复制"
+            accent="success"
+            onClick={onCopyImage}
+            className="rounded-full px-2.5 py-1"
+          />
+        ) : (
+          <ToolbarActionButton
+            icon={<CopyImgIcon />}
+            label={copyImageState.copying ? '复制中…' : '复制长图'}
+            onClick={onCopyImage}
+            className={twMerge(!hasRecords && disabledClassName, copyImageState.copying && busyClassName)}
+          />
+        )}
+        <ToolbarActionButton
+          icon={<ImageIcon />}
+          label="导出长图"
+          onClick={onExportPng}
+          className={!hasRecords ? disabledClassName : undefined}
+        />
+        <ToolbarActionButton
+          icon={<FileTextIcon />}
+          label="导出 PDF"
+          accent="primary"
+          onClick={onExportPdf}
+          className={!hasRecords ? disabledClassName : undefined}
+        />
+      </ToolbarSection>
     </div>
   )
 }

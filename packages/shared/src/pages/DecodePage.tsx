@@ -108,9 +108,9 @@ export function DecodePage() {
         <div className="flex-1 p-5 flex flex-col gap-4 overflow-auto">
           <StatusBar color="green">
             {error
-              ? <span style={{ color: 'var(--error-text)' }}>{error}</span>
+              ? <span className="text-ct-danger-foreground">{error}</span>
               : scanHint
-                ? <span style={{ color: 'var(--success-text)' }}>✓ {scanHint}</span>
+                ? <span className="text-ct-success-foreground">✓ {scanHint}</span>
                 : '默认已载入旧版基准长码，可直接验证迁移结果。'
             }
           </StatusBar>
@@ -127,13 +127,12 @@ export function DecodePage() {
             mono rows={3}
           />
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-[12px] flex-1" style={{ color: 'var(--text-secondary)' }}>
+            <label className="flex flex-1 items-center gap-2 text-[12px] text-ct-content-secondary">
               <input
                 type="checkbox"
                 checked={decodeOnPaste}
                 onChange={(e) => setDecodeOnPaste(e.target.checked)}
-                className="h-4 w-4 rounded"
-                style={{ borderColor: 'var(--border-input)', accentColor: 'var(--success)' }}
+                className="h-4 w-4 rounded border-ct-border-input accent-[var(--success)]"
               />
               粘贴即解码
             </label>
@@ -154,13 +153,10 @@ export function DecodePage() {
                 ].map(({ label, val }) => (
                   <div key={label} className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{label}</span>
+                      <span className="text-[11px] text-ct-content-muted">{label}</span>
                       <CopyButton value={val} />
                     </div>
-                    <div
-                      className="h-9 px-3 flex items-center rounded-xl border font-mono text-[11px] overflow-hidden"
-                      style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
-                    >
+                    <div className="flex h-9 items-center overflow-hidden rounded-xl border border-ct-border bg-ct-surface-input px-3 font-mono text-[11px] text-ct-content-secondary">
                       <span className="truncate">{val}</span>
                     </div>
                   </div>
@@ -183,11 +179,11 @@ export function DecodePage() {
                 return (
                   <div
                     key={key}
-                    className="group relative flex flex-col gap-1 p-3 rounded-xl border cursor-pointer transition-shadow hover:shadow-sm"
-                    style={{
-                      backgroundColor: highlight ? 'var(--accent-light)' : 'var(--bg-input)',
-                      borderColor: highlight ? 'var(--accent-border)' : 'var(--border)',
-                    }}
+                    className={
+                      highlight
+                        ? 'group relative flex cursor-pointer flex-col gap-1 rounded-xl border border-ct-brand-border bg-ct-brand-soft p-3 transition-shadow hover:shadow-sm'
+                        : 'group relative flex cursor-pointer flex-col gap-1 rounded-xl border border-ct-border bg-ct-surface-input p-3 transition-shadow hover:shadow-sm'
+                    }
                     onClick={() => {
                       if (!valStr) return
                       navigator.clipboard.writeText(valStr)
@@ -196,17 +192,17 @@ export function DecodePage() {
                     }}
                     title="点击复制"
                   >
-                    <span className="text-[11px]" style={{ color: highlight ? 'var(--accent-text)' : 'var(--text-muted)' }}>{label}</span>
-                    <span className="text-[18px] font-semibold font-mono" style={{ color: highlight ? 'var(--accent-text)' : 'var(--text-primary)' }}>
+                    <span className={highlight ? 'text-[11px] text-ct-brand-foreground' : 'text-[11px] text-ct-content-muted'}>{label}</span>
+                    <span className={highlight ? 'text-[18px] font-mono font-semibold text-ct-brand-foreground' : 'text-[18px] font-mono font-semibold text-ct-content-primary'}>
                       {valStr || '—'}
                     </span>
-                    <span className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px]" style={{ color: 'var(--text-muted)' }}>复制</span>
+                    <span className="absolute top-2 right-2 text-[10px] text-ct-content-muted opacity-0 transition-opacity group-hover:opacity-100">复制</span>
                   </div>
                 )
               })}
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-[13px]" style={{ color: 'var(--text-muted)' }}>
+            <div className="flex h-full items-center justify-center text-[13px] text-ct-content-muted">
               输入长码后点击解码
             </div>
           )}

@@ -12,6 +12,7 @@ import { ZapIcon, CheckIcon, CopyImgIcon, InfoIcon } from '../ui/icons'
 import { usePlatformOps } from '../lib/platformOps'
 import { usePdfSettingsStore } from '../store/pdfSettingsStore'
 import { useCopy } from '../ui/CopyButton'
+import { twMerge } from 'tailwind-merge'
 
 function getDefaultValues(): ReagentFormValues {
   const d = new Date()
@@ -114,21 +115,21 @@ export function EncodePage() {
         <CardHeader tag={{ label: 'ENCODE', color: 'indigo' }} title="参数输入" />
         <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
           {submitError
-            ? <StatusBar color="indigo"><span style={{ color: 'var(--error-text)' }}>{submitError}</span></StatusBar>
+            ? <StatusBar color="indigo"><span className="text-ct-danger-foreground">{submitError}</span></StatusBar>
             : hasErrors
-              ? <StatusBar color="indigo"><span style={{ color: 'var(--error-text)' }}>请修正红色字段后再生成</span></StatusBar>
+              ? <StatusBar color="indigo"><span className="text-ct-danger-foreground">请修正红色字段后再生成</span></StatusBar>
               : <StatusBar color="indigo">录入参数后点击生成编码，长码、短码和条码预览将同步刷新。</StatusBar>
           }
 
           <div>
-            <p className="text-[11px] font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--text-muted)' }}>参数输入</p>
+            <p className="mb-3 text-[11px] font-semibold tracking-widest uppercase text-ct-content-muted">参数输入</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {FIELD_DEFS.map(({ id, label, min, max }) => {
                 const err = errors[id]
                 const field = register(id)
                 return (
                   <label key={id} className="flex flex-col gap-1">
-                    <span className="text-[11px] font-medium" style={{ color: err ? 'var(--error-text)' : 'var(--text-muted)' }}>
+                    <span className={err ? 'text-[11px] font-medium text-ct-danger-foreground' : 'text-[11px] font-medium text-ct-content-muted'}>
                       {label}
                       {err && <span className="ml-1 text-[10px]">({err.message})</span>}
                     </span>
@@ -138,16 +139,13 @@ export function EncodePage() {
                       type="number"
                       min={min}
                       max={max}
-                      className="h-9 px-3 rounded-xl border text-[13px] font-mono outline-none transition-colors focus:ring-2"
-                      style={err ? {
-                        borderColor: 'var(--error)',
-                        backgroundColor: 'var(--error-light)',
-                        color: 'var(--text-primary)',
-                      } : {
-                        borderColor: 'var(--border-input)',
-                        backgroundColor: 'var(--bg-input)',
-                        color: 'var(--text-primary)',
-                      }}
+                      className={twMerge(
+                        'h-9 rounded-xl border px-3 text-[13px] font-mono transition-[background-color,border-color,color,box-shadow] duration-200',
+                        'outline-hidden focus:border-ct-brand focus:ring-4 focus:ring-ct-brand/15',
+                        err
+                          ? 'border-ct-danger bg-ct-danger-soft text-ct-content-primary'
+                          : 'border-ct-border-input bg-ct-surface-input text-ct-content-primary',
+                      )}
                     />
                   </label>
                 )
@@ -172,8 +170,8 @@ export function EncodePage() {
           <div className="flex-1" />
 
           <div>
-            <div className="w-full h-px mb-4" style={{ backgroundColor: 'var(--border)' }} />
-            <p className="text-[11px] font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--text-muted)' }}>输出结果</p>
+            <div className="mb-4 h-px w-full bg-ct-border" />
+            <p className="mb-3 text-[11px] font-semibold tracking-widest uppercase text-ct-content-muted">输出结果</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <OutputField label="长码 ASCII"     value={result?.encodedAscii ?? ''} />
               <OutputField label="短码 ASCII"     value={result?.shortAscii ?? ''} />
@@ -192,17 +190,14 @@ export function EncodePage() {
             ascii={result?.encodedAscii ?? ''}
             svg={result ? createBarcodeSvg(result.encodedAscii, { moduleWidth: 1.4, height: 80, caption: false }) : null}
           />
-          <div className="w-full h-px" style={{ backgroundColor: 'var(--border)' }} />
+          <div className="h-px w-full bg-ct-border" />
           <BarcodeSection
             title="短码"
             ascii={result?.shortAscii ?? ''}
             svg={result ? createBarcodeSvg(result.shortAscii, { moduleWidth: 2, height: 80, caption: false }) : null}
           />
           <div className="flex-1" />
-          <div
-            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[12px]"
-            style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-muted)' }}
-          >
+          <div className="flex items-center gap-2 rounded-xl bg-ct-surface-input px-3 py-2.5 text-[12px] text-ct-content-muted">
             <InfoIcon className="w-3.5 h-3.5 shrink-0" />
             点击生成编码后条码自动更新
           </div>
@@ -219,9 +214,9 @@ function OutputField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{label}</span>
+        <span className="text-[11px] text-ct-content-muted">{label}</span>
         {clickable && (
-          <span className="text-[10px]" style={{ color: copied ? 'var(--success-text)' : 'var(--text-faint)' }}>
+          <span className={copied ? 'text-[10px] text-ct-success-foreground' : 'text-[10px] text-ct-content-faint'}>
             {copied ? '已复制' : '点击复制'}
           </span>
         )}
@@ -236,30 +231,15 @@ function OutputField({ label, value }: { label: string; value: string }) {
           e.preventDefault()
           copy(value)
         }}
-        className="h-9 px-3 flex items-center rounded-xl border font-mono text-[11px] overflow-hidden outline-none transition-colors"
-        style={copied ? {
-          backgroundColor: 'var(--success-light)',
-          borderColor: 'var(--success-border)',
-          color: 'var(--success-text)',
-          cursor: 'pointer',
-        } : {
-          backgroundColor: 'var(--bg-input)',
-          borderColor: 'var(--border)',
-          color: 'var(--text-secondary)',
-          cursor: clickable ? 'pointer' : 'default',
-        }}
-        onMouseEnter={e => {
-          if (!clickable || copied) return
-          e.currentTarget.style.borderColor = 'var(--accent)'
-          e.currentTarget.style.backgroundColor = 'var(--accent-light)'
-          e.currentTarget.style.color = 'var(--accent-text)'
-        }}
-        onMouseLeave={e => {
-          if (!clickable || copied) return
-          e.currentTarget.style.borderColor = 'var(--border)'
-          e.currentTarget.style.backgroundColor = 'var(--bg-input)'
-          e.currentTarget.style.color = 'var(--text-secondary)'
-        }}
+        className={twMerge(
+          'flex h-9 items-center overflow-hidden rounded-xl border px-3 font-mono text-[11px] transition-[background-color,border-color,color,box-shadow] duration-200',
+          'outline-hidden',
+          copied
+            ? 'cursor-pointer border-ct-success-border bg-ct-success-soft text-ct-success-foreground'
+            : clickable
+              ? 'cursor-pointer border-ct-border bg-ct-surface-input text-ct-content-secondary hover:border-ct-brand hover:bg-ct-brand-soft hover:text-ct-brand-foreground'
+              : 'cursor-default border-ct-border bg-ct-surface-input text-ct-content-secondary',
+        )}
       >
         <span className="truncate">{value || '—'}</span>
       </div>
@@ -305,32 +285,18 @@ function BarcodeSection({ title, svg, ascii }: { title: string; svg: string | nu
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>{title}</span>
+        <span className="text-[13px] font-medium text-ct-content-primary">{title}</span>
         <div className="flex gap-1.5 items-center">
           <button
+            type="button"
             onClick={handleCopyImage} disabled={!svg || copying}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] transition-colors border cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            style={copied ? {
-              backgroundColor: 'var(--success-light)',
-              color: 'var(--success-text)',
-              borderColor: 'var(--success-border)',
-            } : {
-              backgroundColor: 'var(--bg-input)',
-              color: 'var(--text-muted)',
-              borderColor: 'var(--border)',
-            }}
-            onMouseEnter={e => { if (!copied) {
-              const el = e.currentTarget
-              el.style.color = 'var(--accent-text)'
-              el.style.borderColor = 'var(--accent)'
-              el.style.backgroundColor = 'var(--accent-light)'
-            }}}
-            onMouseLeave={e => { if (!copied) {
-              const el = e.currentTarget
-              el.style.color = 'var(--text-muted)'
-              el.style.borderColor = 'var(--border)'
-              el.style.backgroundColor = 'var(--bg-input)'
-            }}}
+            className={twMerge(
+              'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] transition-[background-color,border-color,color] duration-200',
+              'disabled:cursor-not-allowed disabled:opacity-40',
+              copied
+                ? 'border-ct-success-border bg-ct-success-soft text-ct-success-foreground'
+                : 'border-ct-border bg-ct-surface-input text-ct-content-muted hover:border-ct-brand hover:bg-ct-brand-soft hover:text-ct-brand-foreground',
+            )}
           >
             {copied ? <CheckIcon /> : <CopyImgIcon className="w-3 h-3" />}
             {copied ? '已复制' : copying ? '复制中…' : '复制图片'}
@@ -339,10 +305,7 @@ function BarcodeSection({ title, svg, ascii }: { title: string; svg: string | nu
           <Button variant="primary" size="sm" onClick={handleExportPdf} disabled={!svg}>PDF</Button>
         </div>
       </div>
-      <div
-        className="flex flex-col items-center rounded-xl border p-3"
-        style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)', minHeight: 110 }}
-      >
+      <div className="flex min-h-[110px] flex-col items-center rounded-xl border border-ct-border bg-ct-surface-input p-3">
         {svg
           ? <>
               <div dangerouslySetInnerHTML={{ __html: svg }} className="max-w-full w-full overflow-hidden [&>svg]:w-full [&>svg]:h-auto" />
@@ -351,27 +314,18 @@ function BarcodeSection({ title, svg, ascii }: { title: string; svg: string | nu
                 onClick={() => ascii && copyAscii(ascii)}
                 disabled={!ascii}
                 title="复制 ASCII"
-                className="mt-1.5 text-[12px] font-mono text-center break-all leading-tight transition-colors cursor-pointer disabled:cursor-default w-full rounded-md px-2 py-1"
-                style={{
-                  color: copiedAscii ? 'var(--success-text)' : 'var(--barcode-text)',
-                  letterSpacing: '0.05em',
-                  backgroundColor: copiedAscii ? 'var(--success-light)' : 'transparent',
-                }}
-                onMouseEnter={e => {
-                  if (!ascii || copiedAscii) return
-                  e.currentTarget.style.backgroundColor = 'var(--accent-light)'
-                  e.currentTarget.style.color = 'var(--accent-text)'
-                }}
-                onMouseLeave={e => {
-                  if (!ascii || copiedAscii) return
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.color = 'var(--barcode-text)'
-                }}
+                className={twMerge(
+                  'mt-1.5 w-full rounded-md px-2 py-1 text-center font-mono text-[12px] leading-tight break-all tracking-[0.05em] transition-[background-color,color] duration-200',
+                  'disabled:cursor-default',
+                  copiedAscii
+                    ? 'bg-ct-success-soft text-ct-success-foreground'
+                    : 'text-[var(--barcode-text)] hover:bg-ct-brand-soft hover:text-ct-brand-foreground',
+                )}
               >
                 {ascii}
               </button>
             </>
-          : <span className="text-[12px] m-auto" style={{ color: 'var(--text-muted)' }}>生成编码后显示</span>
+          : <span className="m-auto text-[12px] text-ct-content-muted">生成编码后显示</span>
         }
       </div>
     </div>

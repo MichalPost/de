@@ -2,55 +2,61 @@
 @source "../../../apps/web/src";
 @source ".";
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 /* ── Tailwind v4 theme tokens ─────────────────────────────────────────────
    Map our CSS variables to Tailwind utility classes using ct- prefix
    to avoid conflicts with Tailwind's built-in color tokens.
    Usage: bg-ct-card, text-ct-primary, border-ct-accent, etc.
    ──────────────────────────────────────────────────────────────────────── */
 @theme inline {
-  --color-ct-bg-app:       var(--bg-app);
-  --color-ct-bg-card:      var(--bg-card);
-  --color-ct-bg-input:     var(--bg-input);
-  --color-ct-bg-hover:     var(--bg-hover);
-  --color-ct-bg-sidebar:   var(--bg-sidebar);
-  --color-ct-bg-header:    var(--bg-header);
-  --color-ct-bg-subtle:    var(--bg-subtle);
+  --color-ct-surface-app:        var(--surface-app);
+  --color-ct-surface-sidebar:    var(--surface-sidebar);
+  --color-ct-surface-header:     var(--surface-header);
+  --color-ct-surface-card:       var(--surface-card);
+  --color-ct-surface-input:      var(--surface-input);
+  --color-ct-surface-hover:      var(--surface-hover);
+  --color-ct-surface-active:     var(--surface-active);
+  --color-ct-surface-subtle:     var(--surface-subtle);
 
-  --color-ct-border:       var(--border);
-  --color-ct-border-input: var(--border-input);
+  --color-ct-border:             var(--border-default);
+  --color-ct-border-subtle:      var(--border-subtle);
+  --color-ct-border-input:       var(--field-border);
 
-  --color-ct-text-primary:   var(--text-primary);
-  --color-ct-text-secondary: var(--text-secondary);
-  --color-ct-text-muted:     var(--text-muted);
-  --color-ct-text-faint:     var(--text-faint);
+  --color-ct-content-primary:    var(--content-primary);
+  --color-ct-content-secondary:  var(--content-secondary);
+  --color-ct-content-muted:      var(--content-muted);
+  --color-ct-content-faint:      var(--content-faint);
 
-  --color-ct-accent:         var(--accent);
-  --color-ct-accent-hover:   var(--accent-hover);
-  --color-ct-accent-light:   var(--accent-light);
-  --color-ct-accent-border:  var(--accent-border);
-  --color-ct-accent-text:    var(--accent-text);
+  --color-ct-brand:              var(--brand);
+  --color-ct-brand-hover:        var(--brand-hover);
+  --color-ct-brand-soft:         var(--brand-soft);
+  --color-ct-brand-border:       var(--brand-border);
+  --color-ct-brand-foreground:   var(--brand-foreground);
 
-  --color-ct-success:        var(--success);
-  --color-ct-success-light:  var(--success-light);
-  --color-ct-success-border: var(--success-border);
-  --color-ct-success-text:   var(--success-text);
+  --color-ct-success:            var(--success);
+  --color-ct-success-hover:      var(--success-hover);
+  --color-ct-success-soft:       var(--success-soft);
+  --color-ct-success-border:     var(--success-border);
+  --color-ct-success-foreground: var(--success-foreground);
 
-  --color-ct-warning:        var(--warning);
-  --color-ct-warning-light:  var(--warning-light);
-  --color-ct-warning-text:   var(--warning-text);
+  --color-ct-warning:            var(--warning);
+  --color-ct-warning-soft:       var(--warning-soft);
+  --color-ct-warning-foreground: var(--warning-foreground);
 
-  --color-ct-purple:         var(--purple);
-  --color-ct-purple-light:   var(--purple-light);
-  --color-ct-purple-text:    var(--purple-text);
+  --color-ct-danger:             var(--danger);
+  --color-ct-danger-soft:        var(--danger-soft);
+  --color-ct-danger-border:      var(--danger-border);
+  --color-ct-danger-foreground:  var(--danger-foreground);
 
-  --color-ct-cyan:           var(--cyan);
-  --color-ct-cyan-light:     var(--cyan-light);
-  --color-ct-cyan-text:      var(--cyan-text);
+  --color-ct-info:               var(--info);
+  --color-ct-info-soft:          var(--info-soft);
+  --color-ct-info-foreground:    var(--info-foreground);
 
-  --color-ct-error:          var(--error);
-  --color-ct-error-light:    var(--error-light);
-  --color-ct-error-border:   var(--error-border);
-  --color-ct-error-text:     var(--error-text);
+  --color-ct-highlight:          var(--highlight);
+  --color-ct-highlight-hover:    var(--highlight-hover);
+  --color-ct-highlight-soft:     var(--highlight-soft);
+  --color-ct-highlight-foreground: var(--highlight-foreground);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -69,62 +75,106 @@ html, body, #root {
 /* ─── Light (default) ───────────────────────────────────────────────────── */
 :root,
 [data-theme="light"] {
+  color-scheme: light;
+
+  --surface-app:      oklch(0.966 0.004 286);
+  --surface-sidebar:  oklch(1 0 0);
+  --surface-header:   oklch(1 0 0);
+  --surface-card:     oklch(1 0 0);
+  --surface-input:    oklch(0.979 0.004 286);
+  --surface-hover:    oklch(0.953 0.006 286);
+  --surface-active:   oklch(0.939 0.03 286);
+  --surface-subtle:   oklch(0.985 0.002 286);
+
+  --border-default:   oklch(0.92 0.006 286);
+  --field-border:     oklch(0.92 0.006 286);
+  --content-primary:  oklch(0.21 0.01 264);
+  --content-secondary: oklch(0.45 0.014 264);
+  --content-muted:    oklch(0.67 0.01 264);
+  --content-faint:    oklch(0.81 0.01 264);
+
+  --brand:            oklch(0.61 0.24 282);
+  --brand-hover:      oklch(0.54 0.23 280);
+  --brand-soft:       oklch(0.94 0.03 286);
+  --brand-border:     oklch(0.87 0.05 286);
+  --brand-foreground: oklch(0.61 0.24 282);
+
+  --success:            oklch(0.72 0.17 158);
+  --success-hover:      oklch(0.65 0.16 158);
+  --success-soft:       oklch(0.97 0.03 160);
+  --success-border:     oklch(0.9 0.08 160);
+  --success-foreground: oklch(0.65 0.16 158);
+
+  --warning:            oklch(0.76 0.16 78);
+  --warning-soft:       oklch(0.98 0.025 80);
+  --warning-foreground: oklch(0.76 0.16 78);
+
+  --highlight:            oklch(0.67 0.22 310);
+  --highlight-hover:      oklch(0.61 0.21 310);
+  --highlight-soft:       oklch(0.97 0.03 312);
+  --highlight-foreground: oklch(0.67 0.22 310);
+
+  --info:            oklch(0.73 0.13 215);
+  --info-soft:       oklch(0.98 0.02 215);
+  --info-foreground: oklch(0.73 0.13 215);
+
+  --danger:            oklch(0.66 0.21 25);
+  --danger-soft:       oklch(0.97 0.025 25);
+  --danger-border:     oklch(0.91 0.06 25);
+  --danger-foreground: oklch(0.66 0.21 25);
+
   /* Layout */
-  --bg-app:           #F4F5F7;
-  --bg-sidebar:       #FFFFFF;
-  --bg-header:        #FFFFFF;
-  --bg-card:          #FFFFFF;
-  --bg-input:         #F7F8FA;
-  --bg-hover:         #F0F1F5;
-  --bg-active:        #EEEEFF;
-  --bg-subtle:        #FAFAFA;
+  --bg-app:           var(--surface-app);
+  --bg-sidebar:       var(--surface-sidebar);
+  --bg-header:        var(--surface-header);
+  --bg-card:          var(--surface-card);
+  --bg-input:         var(--surface-input);
+  --bg-hover:         var(--surface-hover);
+  --bg-active:        var(--surface-active);
+  --bg-subtle:        var(--surface-subtle);
 
   /* Borders */
-  --border:           #E5E7EB;
+  --border:           var(--border-default);
   --border-subtle:    #F0F1F5;
-  --border-input:     #E5E7EB;
+  --border-input:     var(--field-border);
 
   /* Text */
-  --text-primary:     #111827;
-  --text-secondary:   #4B5563;
-  --text-muted:       #9CA3AF;
-  --text-faint:       #C4C9D4;
+  --text-primary:     var(--content-primary);
+  --text-secondary:   var(--content-secondary);
+  --text-muted:       var(--content-muted);
+  --text-faint:       var(--content-faint);
 
   /* Accent (indigo/purple) */
-  --accent:           #635BFF;
-  --accent-hover:     #4F46E5;
-  --accent-light:     #EEEEFF;
-  --accent-border:    #C7D2FE;
-  --accent-text:      #635BFF;
+  --accent:           var(--brand);
+  --accent-hover:     var(--brand-hover);
+  --accent-light:     var(--brand-soft);
+  --accent-border:    var(--brand-border);
+  --accent-text:      var(--brand-foreground);
 
   /* Success (green) */
-  --success:          #10B981;
-  --success-hover:    #059669;
-  --success-light:    #ECFDF5;
-  --success-border:   #A7F3D0;
-  --success-text:     #10B981;
+  --success-light:    var(--success-soft);
+  --success-text:     var(--success-foreground);
 
   /* Warning (amber) */
-  --warning:          #F59E0B;
-  --warning-light:    #FFF7ED;
-  --warning-text:     #F59E0B;
+  --warning-light:    var(--warning-soft);
+  --warning-text:     var(--warning-foreground);
 
   /* Purple */
-  --purple:           #A855F7;
-  --purple-hover:     #9333EA;
-  --purple-light:     #FDF4FF;
-  --purple-text:      #A855F7;
+  --purple:           var(--highlight);
+  --purple-hover:     var(--highlight-hover);
+  --purple-light:     var(--highlight-soft);
+  --purple-text:      var(--highlight-foreground);
 
   /* Cyan */
-  --cyan:             #06B6D4;
-  --cyan-light:       #ECFEFF;
-  --cyan-text:        #06B6D4;
+  --cyan:             var(--info);
+  --cyan-light:       var(--info-soft);
+  --cyan-text:        var(--info-foreground);
 
   /* Error */
-  --error:            #EF4444;
-  --error-light:      #FEF2F2;
-  --error-border:     #FECACA;
-  --error-text:       #EF4444;
+  --error:            var(--danger);
+  --error-light:      var(--danger-soft);
+  --error-border:     var(--danger-border);
+  --error-text:       var(--danger-foreground);
 
   /* Barcode text */
   --barcode-text:     #46362b;
@@ -142,6 +192,53 @@ html, body, #root {
 
 /* ─── Dark ──────────────────────────────────────────────────────────────── */
 [data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface-app:      oklch(0.17 0.015 270);
+  --surface-sidebar:  oklch(0.22 0.015 270);
+  --surface-header:   oklch(0.22 0.015 270);
+  --surface-card:     oklch(0.27 0.02 270);
+  --surface-input:    oklch(0.31 0.02 270);
+  --surface-hover:    oklch(0.31 0.02 270);
+  --surface-active:   oklch(0.35 0.05 280);
+  --surface-subtle:   oklch(0.24 0.018 270);
+
+  --border-default:   oklch(0.36 0.02 270);
+  --content-primary:  oklch(0.95 0.01 280);
+  --content-secondary: oklch(0.76 0.02 275);
+  --content-muted:    oklch(0.68 0.02 275);
+  --content-faint:    oklch(0.53 0.02 275);
+
+  --brand:            oklch(0.69 0.19 285);
+  --brand-hover:      oklch(0.63 0.18 285);
+  --brand-soft:       oklch(0.34 0.05 280);
+  --brand-border:     oklch(0.45 0.05 280);
+  --brand-foreground: oklch(0.8 0.12 285);
+
+  --success:            oklch(0.78 0.15 160);
+  --success-hover:      oklch(0.72 0.14 160);
+  --success-soft:       oklch(0.31 0.05 160);
+  --success-border:     oklch(0.4 0.06 160);
+  --success-foreground: oklch(0.78 0.15 160);
+
+  --warning:            oklch(0.83 0.15 84);
+  --warning-soft:       oklch(0.3 0.04 84);
+  --warning-foreground: oklch(0.83 0.15 84);
+
+  --highlight:            oklch(0.78 0.17 315);
+  --highlight-hover:      oklch(0.71 0.16 315);
+  --highlight-soft:       oklch(0.28 0.06 315);
+  --highlight-foreground: oklch(0.82 0.15 315);
+
+  --info:            oklch(0.8 0.11 220);
+  --info-soft:       oklch(0.26 0.04 220);
+  --info-foreground: oklch(0.8 0.11 220);
+
+  --danger:            oklch(0.74 0.16 25);
+  --danger-soft:       oklch(0.28 0.05 25);
+  --danger-border:     oklch(0.38 0.05 25);
+  --danger-foreground: oklch(0.74 0.16 25);
+
   --bg-app:           #0F1117;
   --bg-sidebar:       #161B27;
   --bg-header:        #161B27;
@@ -153,7 +250,8 @@ html, body, #root {
 
   --border:           #2A3147;
   --border-subtle:    #1E2433;
-  --border-input:     #2A3147;
+  --field-border:     #2A3147;
+  --border-input:     var(--field-border);
 
   --text-primary:     #F0F2FF;
   --text-secondary:   #A0AABF;
@@ -203,6 +301,53 @@ html, body, #root {
 
 /* ─── Glass (Glassmorphism + Mesh Gradient) ─────────────────────────────── */
 [data-theme="glass"] {
+  color-scheme: light;
+
+  --surface-app:      oklch(0.9 0.05 280);
+  --surface-sidebar:  color-mix(in oklab, white 55%, transparent);
+  --surface-header:   color-mix(in oklab, white 55%, transparent);
+  --surface-card:     color-mix(in oklab, white 45%, transparent);
+  --surface-input:    color-mix(in oklab, white 60%, transparent);
+  --surface-hover:    color-mix(in oklab, white 35%, transparent);
+  --surface-active:   color-mix(in oklab, var(--brand) 18%, transparent);
+  --surface-subtle:   color-mix(in oklab, white 30%, transparent);
+
+  --border-default:   color-mix(in oklab, white 45%, transparent);
+  --content-primary:  oklch(0.26 0.035 290);
+  --content-secondary: oklch(0.41 0.03 290);
+  --content-muted:    oklch(0.62 0.02 290);
+  --content-faint:    oklch(0.76 0.015 290);
+
+  --brand:            oklch(0.61 0.24 282);
+  --brand-hover:      oklch(0.54 0.23 280);
+  --brand-soft:       color-mix(in oklab, var(--brand) 15%, transparent);
+  --brand-border:     color-mix(in oklab, var(--brand) 30%, transparent);
+  --brand-foreground: oklch(0.57 0.21 282);
+
+  --success:            oklch(0.72 0.17 158);
+  --success-hover:      oklch(0.66 0.16 158);
+  --success-soft:       color-mix(in oklab, var(--success) 12%, transparent);
+  --success-border:     color-mix(in oklab, var(--success) 28%, transparent);
+  --success-foreground: oklch(0.58 0.14 158);
+
+  --warning:            oklch(0.68 0.16 72);
+  --warning-soft:       color-mix(in oklab, var(--warning) 12%, transparent);
+  --warning-foreground: oklch(0.62 0.14 72);
+
+  --highlight:            oklch(0.63 0.23 315);
+  --highlight-hover:      oklch(0.57 0.22 315);
+  --highlight-soft:       color-mix(in oklab, var(--highlight) 12%, transparent);
+  --highlight-foreground: oklch(0.57 0.2 315);
+
+  --info:            oklch(0.66 0.12 220);
+  --info-soft:       color-mix(in oklab, var(--info) 12%, transparent);
+  --info-foreground: oklch(0.58 0.1 220);
+
+  --danger:            oklch(0.61 0.21 25);
+  --danger-soft:       color-mix(in oklab, var(--danger) 10%, transparent);
+  --danger-border:     color-mix(in oklab, var(--danger) 28%, transparent);
+  --danger-foreground: oklch(0.58 0.19 25);
+
   --bg-app:           #C9D6FF;
   --bg-sidebar:       rgba(255,255,255,0.55);
   --bg-header:        rgba(255,255,255,0.55);
@@ -214,7 +359,8 @@ html, body, #root {
 
   --border:           rgba(255,255,255,0.45);
   --border-subtle:    rgba(255,255,255,0.25);
-  --border-input:     rgba(200,200,255,0.4);
+  --field-border:     rgba(200,200,255,0.4);
+  --border-input:     var(--field-border);
 
   --text-primary:     #1A1A3E;
   --text-secondary:   #3D3D6B;
@@ -270,6 +416,53 @@ html, body, #root {
 
 /* ─── Neon (Dark + Electric Accents) ────────────────────────────────────── */
 [data-theme="neon"] {
+  color-scheme: dark;
+
+  --surface-app:      oklch(0.12 0.02 272);
+  --surface-sidebar:  oklch(0.15 0.02 272);
+  --surface-header:   oklch(0.15 0.02 272);
+  --surface-card:     oklch(0.18 0.03 272);
+  --surface-input:    oklch(0.15 0.02 272);
+  --surface-hover:    oklch(0.22 0.03 272);
+  --surface-active:   oklch(0.26 0.07 300);
+  --surface-subtle:   oklch(0.13 0.02 272);
+
+  --border-default:   oklch(0.25 0.02 272);
+  --content-primary:  oklch(0.94 0.015 285);
+  --content-secondary: oklch(0.7 0.04 280);
+  --content-muted:    oklch(0.62 0.05 280);
+  --content-faint:    oklch(0.43 0.04 280);
+
+  --brand:            oklch(0.68 0.22 290);
+  --brand-hover:      oklch(0.61 0.21 290);
+  --brand-soft:       oklch(0.25 0.08 292);
+  --brand-border:     oklch(0.39 0.08 292);
+  --brand-foreground: oklch(0.79 0.15 290);
+
+  --success:            oklch(0.88 0.29 145);
+  --success-hover:      oklch(0.8 0.26 145);
+  --success-soft:       oklch(0.2 0.08 145);
+  --success-border:     oklch(0.31 0.1 145);
+  --success-foreground: oklch(0.88 0.29 145);
+
+  --warning:            oklch(0.84 0.19 84);
+  --warning-soft:       oklch(0.23 0.06 84);
+  --warning-foreground: oklch(0.84 0.19 84);
+
+  --highlight:            oklch(0.75 0.24 330);
+  --highlight-hover:      oklch(0.69 0.23 330);
+  --highlight-soft:       oklch(0.2 0.09 330);
+  --highlight-foreground: oklch(0.83 0.18 330);
+
+  --info:            oklch(0.83 0.14 220);
+  --info-soft:       oklch(0.2 0.06 220);
+  --info-foreground: oklch(0.83 0.14 220);
+
+  --danger:            oklch(0.72 0.22 25);
+  --danger-soft:       oklch(0.2 0.07 25);
+  --danger-border:     oklch(0.31 0.08 25);
+  --danger-foreground: oklch(0.76 0.18 25);
+
   --bg-app:           #07080F;
   --bg-sidebar:       #0D0E1A;
   --bg-header:        #0D0E1A;
@@ -281,7 +474,8 @@ html, body, #root {
 
   --border:           #1E1F35;
   --border-subtle:    #141525;
-  --border-input:     #252640;
+  --field-border:     #252640;
+  --border-input:     var(--field-border);
 
   --text-primary:     #E8EAFF;
   --text-secondary:   #8890C0;
@@ -400,6 +594,11 @@ textarea::placeholder {
 /* ── Buttons inherit from parent (theme color set via inline style) ── */
 button {
   color: inherit;
+  cursor: pointer;
+}
+
+:disabled {
+  cursor: not-allowed;
 }
 
 /* ── Smooth theme transition (exclude inputs to avoid color flash) ── */

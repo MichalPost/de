@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react'
+import { Button } from './Button'
 
 interface Props {
   children: ReactNode
@@ -28,22 +29,21 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return this.props.fallback ?? (
         <div
-          className="flex flex-col items-center justify-center gap-3 p-8 rounded-xl border text-center"
-          style={{ backgroundColor: 'var(--error-light)', borderColor: 'var(--error-border)' }}
+          className="flex flex-col items-center justify-center gap-3 rounded-xl border border-ct-danger-border bg-ct-danger-soft p-8 text-center"
         >
-          <span className="text-[15px] font-semibold" style={{ color: 'var(--error-text)' }}>
+          <span className="text-[15px] font-semibold text-ct-danger-foreground">
             出现了一个错误
           </span>
-          <span className="text-[12px] font-mono" style={{ color: 'var(--text-muted)' }}>
+          <span className="text-[12px] font-mono text-ct-content-muted">
             {this.state.error?.message}
           </span>
-          <button
+          <Button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="px-4 py-1.5 rounded-lg border text-[12px] cursor-pointer transition-colors"
-            style={{ borderColor: 'var(--error-border)', color: 'var(--error-text)' }}
+            variant="danger"
+            size="sm"
           >
             重试
-          </button>
+          </Button>
         </div>
       )
     }

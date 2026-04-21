@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { twMerge } from 'tailwind-merge'
 import { useToast } from './Toast'
 
 export function useCopy() {
@@ -42,28 +43,20 @@ export function CopyButton({ value, className }: { value: string; className?: st
   const { copied, copy } = useCopy()
   if (!value) return null
 
-  const baseStyle: React.CSSProperties = copied
-    ? { backgroundColor: 'var(--success-light)', color: 'var(--success-text)', borderColor: 'var(--success-border)' }
-    : { backgroundColor: 'var(--bg-input)', color: 'var(--text-muted)', borderColor: 'var(--border)' }
-
   return (
     <button
+      type="button"
       onClick={() => copy(value)}
       title="复制"
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] transition-colors cursor-pointer border ${className ?? ''}`}
-      style={baseStyle}
-      onMouseEnter={e => { if (!copied) {
-        const el = e.currentTarget
-        el.style.color = 'var(--accent-text)'
-        el.style.borderColor = 'var(--accent)'
-        el.style.backgroundColor = 'var(--accent-light)'
-      }}}
-      onMouseLeave={e => { if (!copied) {
-        const el = e.currentTarget
-        el.style.color = 'var(--text-muted)'
-        el.style.borderColor = 'var(--border)'
-        el.style.backgroundColor = 'var(--bg-input)'
-      }}}
+      className={twMerge(
+        'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px]',
+        'outline-hidden transition-[background-color,border-color,color,box-shadow] duration-200',
+        'focus-visible:ring-4 focus-visible:ring-ct-brand/15',
+        copied
+          ? 'border-ct-success-border bg-ct-success-soft text-ct-success-foreground'
+          : 'border-ct-border bg-ct-surface-input text-ct-content-muted hover:border-ct-brand hover:bg-ct-brand-soft hover:text-ct-brand-foreground',
+        className,
+      )}
     >
       {copied ? <CheckIcon /> : <CopyIcon />}
       {copied ? '已复制' : '复制'}

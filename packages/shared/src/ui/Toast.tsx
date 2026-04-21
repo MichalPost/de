@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
+import { twMerge } from 'tailwind-merge'
 
 type ToastType = 'success' | 'error'
 
@@ -35,12 +36,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="rounded-lg border px-3 py-2 text-[12px] shadow-sm"
-            style={
+            className={twMerge(
+              'rounded-lg border px-3 py-2 text-[12px] shadow-sm',
               toast.type === 'error'
-                ? { borderColor: 'var(--error-border)', backgroundColor: 'var(--error-light)', color: 'var(--error-text)' }
-                : { borderColor: 'var(--success-border)', backgroundColor: 'var(--success-light)', color: 'var(--success-text)' }
-            }
+                ? 'border-ct-danger-border bg-ct-danger-soft text-ct-danger-foreground'
+                : 'border-ct-success-border bg-ct-success-soft text-ct-success-foreground',
+            )}
           >
             {toast.message}
           </div>

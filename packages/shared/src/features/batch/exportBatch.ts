@@ -5,6 +5,7 @@
 import { renderBarcodeToCanvas } from '../../lib/barcode'
 import { canvasToBlob } from '../../lib/utils'
 import type { BatchGeneratedRecord } from './types'
+import { chunkItems, getBatchBarcodeOptions, resolvePrintMode, type BatchPrintMode } from './layout'
 
 export const MAX_PAGES_PER_PNG = 8
 
@@ -25,24 +26,38 @@ type BarItem = { canvas: HTMLCanvasElement; ascii: string }
 
 function buildPageItems(
   records: BatchGeneratedRecord[],
-  globalMode: 'long' | 'short' | 'both' | undefined,
+  globalMode: BatchPrintMode | undefined,
   moduleWidth: number,
   shortModuleWidth: number,
   barcodeHeight: number,
   fontSize: number,
 ): BarItem[][] {
   return records.map(r => {
-    const mode = globalMode ?? r.printMode
+    const mode = resolvePrintMode(r, globalMode)
     const items: BarItem[] = []
     if (mode === 'long' || mode === 'both') {
       items.push({
-        canvas: renderBarcodeToCanvas(r.encodedAscii, { width: moduleWidth, height: barcodeHeight, fontSize, margin: 12 }),
+        canvas: renderBarcodeToCanvas(
+          r.encodedAscii,
+          getBatchBarcodeOptions('exportCanvas', 'long', {
+            width: moduleWidth,
+            height: barcodeHeight,
+            fontSize,
+          }),
+        ),
         ascii: r.encodedAscii,
       })
     }
     if (mode === 'short' || mode === 'both') {
       items.push({
-        canvas: renderBarcodeToCanvas(r.shortAscii, { width: shortModuleWidth, height: barcodeHeight, fontSize, margin: 12 }),
+        canvas: renderBarcodeToCanvas(
+          r.shortAscii,
+          getBatchBarcodeOptions('exportCanvas', 'short', {
+            width: shortModuleWidth,
+            height: barcodeHeight,
+            fontSize,
+          }),
+        ),
         ascii: r.shortAscii,
       })
     }
@@ -53,16 +68,15 @@ function buildPageItems(
 export function renderPagesAsCanvases(opts: RenderOptions): HTMLCanvasElement[] {
   const {
     records, globalMode, cols, perPage,
-    moduleWidth = 3,
-    shortModuleWidth = 4,
-    barcodeHeight = 100,
+    moduleWidth = getBatchBarcodeOptions('exportCanvas', 'long').width ?? 3,
+    shortModuleWidth = getBatchBarcodeOptions('exportCanvas', 'short').width ?? 4,
+    barcodeHeight = getBatchBarcodeOptions('exportCanvas', 'long').height ?? 100,
     pagePaddingPx = 32,
     gapPx = 8,
-    fontSize = 20,
+    fontSize = getBatchBarcodeOptions('exportCanvas', 'long').fontSize ?? 20,
   } = opts
 
-  const pages: BatchGeneratedRecord[][] = []
-  for (let i = 0; i < records.length; i += perPage) pages.push(records.slice(i, i + perPage))
+  const pages = chunkItems(records, perPage)
 
   return pages.map(pageRecords => {
     const allItems = buildPageItems(pageRecords, globalMode, moduleWidth, shortModuleWidth, barcodeHeight, fontSize)

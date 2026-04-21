@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react'
+import { Button } from '../../ui/Button'
 import { useHistoryStore } from '../../store/historyStore'
 import type { BatchHistoryEntry } from './types'
 
@@ -25,48 +26,32 @@ export function BatchHistoryPanel({ open, onClose, onRestore }: Props) {
             key="panel"
             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[320px] flex flex-col shadow-xl border-l"
-            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
+            className="fixed right-0 top-0 bottom-0 z-50 flex w-full flex-col border-l border-ct-border bg-ct-surface-card shadow-[var(--shadow-md)] sm:w-[320px]"
           >
-            <div className="flex items-center justify-between h-14 px-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex h-14 shrink-0 items-center justify-between border-b border-ct-border px-4">
               <div className="flex items-center gap-2">
-                <span
-                  className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase"
-                  style={{ backgroundColor: 'var(--warning-light)', color: 'var(--warning-text)' }}
-                >HISTORY</span>
-                <span className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>批次历史</span>
+                <span className="rounded-full bg-ct-warning-soft px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase text-ct-warning-foreground">HISTORY</span>
+                <span className="text-[14px] font-semibold text-ct-content-primary">批次历史</span>
               </div>
               <div className="flex items-center gap-2">
                 {entries.length > 0 && (
                   <button
+                    type="button"
                     onClick={clearAll}
-                    className="text-[11px] transition-colors cursor-pointer"
-                    style={{ color: 'var(--text-muted)' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--error-text)')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                    className="cursor-pointer text-[11px] text-ct-content-muted transition-colors hover:text-ct-danger-foreground"
                   >清空</button>
                 )}
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors cursor-pointer"
-                  style={{ color: 'var(--text-muted)' }}
-                  onMouseEnter={e => {
-                    const el = e.currentTarget
-                    el.style.backgroundColor = 'var(--bg-hover)'
-                    el.style.color = 'var(--text-primary)'
-                  }}
-                  onMouseLeave={e => {
-                    const el = e.currentTarget
-                    el.style.backgroundColor = 'transparent'
-                    el.style.color = 'var(--text-muted)'
-                  }}
+                  className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-ct-content-muted transition-colors hover:bg-ct-surface-hover hover:text-ct-content-primary"
                 >✕</button>
               </div>
             </div>
 
             <div className="flex-1 overflow-auto p-3 flex flex-col gap-2">
               {entries.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>
+                <div className="flex flex-1 flex-col items-center justify-center gap-2 text-[13px] text-ct-content-muted">
                   <svg className="w-8 h-8 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                   </svg>
@@ -104,47 +89,26 @@ function HistoryCard({ entry, onRestore, onDelete }: {
 
   return (
     <div
-      className="group flex flex-col gap-2 p-3 rounded-xl border transition-colors"
-      style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)' }}
-      onMouseEnter={e => {
-        const el = e.currentTarget
-        el.style.borderColor = 'var(--accent-border)'
-        el.style.backgroundColor = 'var(--accent-light)'
-      }}
-      onMouseLeave={e => {
-        const el = e.currentTarget
-        el.style.borderColor = 'var(--border)'
-        el.style.backgroundColor = 'var(--bg-input)'
-      }}
+      className="group flex flex-col gap-2 rounded-xl border border-ct-border bg-ct-surface-input p-3 transition-colors hover:border-ct-brand-border hover:bg-ct-brand-soft"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <span className="text-[13px] font-medium truncate" style={{ color: 'var(--text-primary)' }}>{entry.templateName}</span>
-          <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{dateStr} · {entry.recordCount} 条</span>
+          <span className="truncate text-[13px] font-medium text-ct-content-primary">{entry.templateName}</span>
+          <span className="text-[11px] text-ct-content-muted">{dateStr} · {entry.recordCount} 条</span>
         </div>
         <button
+          type="button"
           onClick={onDelete}
-          className="shrink-0 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center rounded transition-all cursor-pointer text-[12px]"
-          style={{ color: 'var(--text-muted)' }}
-          onMouseEnter={e => (e.currentTarget.style.color = 'var(--error-text)')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+          className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded text-[12px] text-ct-content-muted opacity-0 transition-all group-hover:opacity-100 hover:text-ct-danger-foreground"
         >✕</button>
       </div>
-      <button
+      <Button
         onClick={() => onRestore(entry)}
-        className="w-full py-1.5 rounded-lg border text-[12px] font-medium transition-colors cursor-pointer"
-        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--accent-text)' }}
-        onMouseEnter={e => {
-          const el = e.currentTarget
-          el.style.backgroundColor = 'var(--accent-light)'
-          el.style.borderColor = 'var(--accent-border)'
-        }}
-        onMouseLeave={e => {
-          const el = e.currentTarget
-          el.style.backgroundColor = 'var(--bg-card)'
-          el.style.borderColor = 'var(--border)'
-        }}
-      >恢复此批次</button>
+        variant="default"
+        size="sm"
+        fullWidth
+        className="text-ct-brand-foreground hover:text-ct-brand-foreground"
+      >恢复此批次</Button>
     </div>
   )
 }

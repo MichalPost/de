@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
+import { PanelHeader } from '../ui/PanelHeader'
 import { CopyButton } from '../ui/CopyButton'
 import { ImageDropZone } from '../ui/ImageDropZone'
 import { scanBarcodeFile, classifyBarcode, cleanBarcodeText, toDecodeHex } from '../lib/barcodeReader'
 import { decodeLongCode } from '../lib/reagent-code'
 import { usePlatformOps } from '../lib/platformOps'
+import { twMerge } from 'tailwind-merge'
 
 type DecodeResult = ReturnType<typeof decodeLongCode>
 
@@ -113,37 +115,37 @@ export function ScanBatchPage() {
   return (
     <div className="flex flex-col gap-4 p-3 md:p-5 min-h-full">
       <Card className="flex flex-col gap-4 p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span
-              className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase"
-              style={{ backgroundColor: 'var(--purple-light)', color: 'var(--purple-text)' }}
-            >SCAN</span>
-            <span className="text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>批量图片识别</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {records.length > 0 && (
+        <PanelHeader
+          tag={{ label: 'SCAN', color: 'purple' }}
+          title="批量图片识别"
+          bordered={false}
+          meta={
+            records.length > 0 ? (
               <>
-                <span className="text-[11px]" style={{ color: 'var(--success-text)' }}>✓ {okCount} 成功</span>
-                {errCount > 0 && <span className="text-[11px]" style={{ color: 'var(--error-text)' }}>✕ {errCount} 失败</span>}
-                <Button variant="ghost" size="sm" onClick={clearAll}>清空</Button>
+                <span className="text-[11px] text-ct-success-foreground">✓ {okCount} 成功</span>
+                {errCount > 0 && <span className="text-[11px] text-ct-danger-foreground">✕ {errCount} 失败</span>}
               </>
-            )}
-          </div>
-        </div>
+            ) : undefined
+          }
+          actions={
+            records.length > 0
+              ? <Button variant="ghost" size="sm" onClick={clearAll}>清空</Button>
+              : undefined
+          }
+          className="px-0"
+        />
 
         <ImageDropZone onFiles={handleFiles} multiple scanning={scanning} label="拖入多张图片批量识别 / 点击选择" />
 
         {scanning && (
           <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between text-[11px]" style={{ color: 'var(--text-muted)' }}>
+            <div className="flex items-center justify-between text-[11px] text-ct-content-muted">
               <span>识别进度</span>
               <span>{progress.done} / {progress.total}</span>
             </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+            <div className="h-1.5 overflow-hidden rounded-full bg-ct-border">
               <motion.div
-                className="h-full rounded-full"
-                style={{ backgroundColor: 'var(--accent)' }}
+                className="h-full rounded-full bg-ct-brand"
                 animate={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%` }}
                 transition={{ duration: 0.2 }}
               />
@@ -171,7 +173,7 @@ export function ScanBatchPage() {
       )}
 
       {records.length === 0 && !scanning && (
-        <div className="flex-1 flex items-center justify-center text-[13px]" style={{ color: 'var(--text-muted)' }}>
+        <div className="flex flex-1 items-center justify-center text-[13px] text-ct-content-muted">
           拖入图片后自动识别并解码
         </div>
       )}
@@ -190,43 +192,38 @@ function ScanRecordCard({ record }: { record: ScanRecord }) {
 
   return (
     <div
-      className="rounded-xl border overflow-hidden"
-      style={{
-        backgroundColor: 'var(--bg-card)',
-        borderColor: record.status === 'ok' ? 'var(--border)' : 'var(--error-border)',
-        boxShadow: 'var(--shadow-card)',
-      }}
+      className={twMerge(
+        'overflow-hidden rounded-xl border bg-ct-surface-card shadow-[var(--shadow-card)]',
+        record.status === 'ok' ? 'border-ct-border' : 'border-ct-danger-border',
+      )}
     >
       <div className="flex items-start gap-2 px-3 py-3 flex-wrap sm:flex-nowrap sm:items-center">
         <img
           src={record.previewUrl} alt={record.filename}
-          className="w-12 h-9 sm:w-14 sm:h-10 object-contain rounded-lg shrink-0"
-          style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border)' }}
+          className="h-9 w-12 shrink-0 rounded-lg border border-ct-border bg-ct-surface-input object-contain sm:h-10 sm:w-14"
         />
         <span
-          className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5 sm:mt-0"
-          style={record.status === 'ok'
-            ? { backgroundColor: 'var(--success-light)', color: 'var(--success-text)' }
-            : { backgroundColor: 'var(--error-light)', color: 'var(--error-text)' }
-          }
+          className={twMerge(
+            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold sm:mt-0',
+            record.status === 'ok' ? 'bg-ct-success-soft text-ct-success-foreground' : 'bg-ct-danger-soft text-ct-danger-foreground',
+          )}
         >
           {record.status === 'ok' ? '✓' : '✕'}
         </span>
         <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-          <span className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{record.filename}</span>
+          <span className="truncate text-[11px] text-ct-content-muted">{record.filename}</span>
           {record.barcodeText
-            ? <span className="text-[12px] font-mono truncate" style={{ color: 'var(--text-primary)' }}>{record.barcodeText}</span>
-            : <span className="text-[12px]" style={{ color: 'var(--error-text)' }}>{record.error}</span>
+            ? <span className="truncate text-[12px] font-mono text-ct-content-primary">{record.barcodeText}</span>
+            : <span className="text-[12px] text-ct-danger-foreground">{record.error}</span>
           }
         </div>
         <div className="flex items-center gap-1.5 shrink-0 w-full sm:w-auto justify-end">
           {record.barcodeKind !== 'unknown' && (
             <span
-              className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-              style={record.barcodeKind === 'long'
-                ? { backgroundColor: 'var(--accent-light)', color: 'var(--accent-text)' }
-                : { backgroundColor: 'var(--success-light)', color: 'var(--success-text)' }
-              }
+              className={twMerge(
+                'rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                record.barcodeKind === 'long' ? 'bg-ct-brand-soft text-ct-brand-foreground' : 'bg-ct-success-soft text-ct-success-foreground',
+              )}
             >
               {record.barcodeKind === 'long' ? '长码' : '短码'}
             </span>
@@ -234,11 +231,9 @@ function ScanRecordCard({ record }: { record: ScanRecord }) {
           {record.barcodeText && <CopyButton value={record.barcodeText} />}
           {(record.decoded || record.barcodeKind === 'short') && (
             <button
+              type="button"
               onClick={() => setExpanded(v => !v)}
-              className="px-2 py-1 rounded-md text-[11px] border transition-colors cursor-pointer"
-              style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent-text)' }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+              className="cursor-pointer rounded-md border border-ct-border bg-ct-surface-input px-2 py-1 text-[11px] text-ct-content-secondary transition-colors hover:border-ct-brand hover:text-ct-brand-foreground"
             >
               {expanded ? '收起' : '展开字段'}
             </button>
@@ -253,8 +248,7 @@ function ScanRecordCard({ record }: { record: ScanRecord }) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden border-t"
-            style={{ borderColor: 'var(--border)' }}
+            className="overflow-hidden border-t border-ct-border"
           >
             {record.decoded ? (
               <div className="px-3 py-3 grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-2">
@@ -263,28 +257,23 @@ function ScanRecordCard({ record }: { record: ScanRecord }) {
                   return (
                     <div
                       key={key}
-                      className="flex flex-col gap-0.5 p-2 rounded-lg border cursor-pointer transition-colors"
-                      style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)' }}
+                      className="flex cursor-pointer flex-col gap-0.5 rounded-lg border border-ct-border bg-ct-surface-input p-2 transition-colors hover:border-ct-brand"
                       onClick={() => val && navigator.clipboard.writeText(val)}
                       title="点击复制"
-                      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-                      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
                     >
-                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{label}</span>
-                      <span className="text-[13px] font-semibold font-mono" style={{ color: 'var(--text-primary)' }}>{val || '—'}</span>
+                      <span className="text-[10px] text-ct-content-muted">{label}</span>
+                      <span className="text-[13px] font-semibold font-mono text-ct-content-primary">{val || '—'}</span>
                     </div>
                   )
                 })}
               </div>
             ) : record.barcodeKind === 'short' ? (
-              <div className="px-4 py-3 flex items-center gap-2 text-[12px]" style={{ color: 'var(--text-muted)' }}>
-                <span className="px-2 py-1 rounded-lg border font-mono"
-                  style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                >{record.barcodeText}</span>
+              <div className="flex items-center gap-2 px-4 py-3 text-[12px] text-ct-content-muted">
+                <span className="rounded-lg border border-ct-border bg-ct-surface-input px-2 py-1 font-mono text-ct-content-primary">{record.barcodeText}</span>
                 <span>短码仅含序号信息，无法解包完整字段</span>
               </div>
             ) : record.error ? (
-              <div className="px-4 py-3 text-[12px]" style={{ color: 'var(--error-text)' }}>{record.error}</div>
+              <div className="px-4 py-3 text-[12px] text-ct-danger-foreground">{record.error}</div>
             ) : null}
           </motion.div>
         )}
