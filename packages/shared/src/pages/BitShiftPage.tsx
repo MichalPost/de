@@ -85,7 +85,7 @@ export function BitShiftPage() {
                 onChange={e => setNumber(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="请输入数字"
-                className="min-h-[2.75rem] px-3 rounded-xl border text-[13px] font-mono outline-none transition-colors focus:ring-2"
+                className="h-11 px-3 rounded-xl border text-[13px] font-mono outline-none transition-colors focus:ring-2"
                 style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
               />
             </label>

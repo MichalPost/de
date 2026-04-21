@@ -11,6 +11,7 @@ export interface UpdateInfo {
   available: boolean
   version?: string
   downloadUrl?: string
+  error?: string
 }
 
 /**
@@ -20,7 +21,9 @@ export interface UpdateInfo {
 export async function checkAndroidUpdate(): Promise<UpdateInfo> {
   try {
     const res = await fetch(MOBILE_UPDATE_MANIFEST_URL, { cache: 'no-store' })
-    if (!res.ok) return { available: false }
+    if (!res.ok) {
+      return { available: false, error: `更新清单请求失败 (${res.status})` }
+    }
 
     const manifest: MobileUpdateManifest = await res.json()
     const latestVersion = manifest.version
@@ -33,7 +36,8 @@ export async function checkAndroidUpdate(): Promise<UpdateInfo> {
       version: latestVersion,
       downloadUrl: manifest.downloadUrl,
     }
-  } catch {
-    return { available: false }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '检查更新失败'
+    return { available: false, error: message }
   }
 }

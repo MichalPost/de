@@ -6,15 +6,20 @@ import { checkAndroidUpdate } from '../lib/updater'
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
 
 function AndroidUpdateSection() {
-  const [status, setStatus] = useState<'idle' | 'checking' | 'found' | 'up-to-date'>('idle')
+  const [status, setStatus] = useState<'idle' | 'checking' | 'found' | 'up-to-date' | 'error'>('idle')
   const [updateInfo, setUpdateInfo] = useState<{ version: string; downloadUrl: string } | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string>()
 
   const handleCheck = async () => {
     setStatus('checking')
+    setErrorMessage(undefined)
     const result = await checkAndroidUpdate()
     if (result.available && result.version && result.downloadUrl) {
       setUpdateInfo({ version: result.version, downloadUrl: result.downloadUrl })
       setStatus('found')
+    } else if (result.error) {
+      setStatus('error')
+      setErrorMessage(result.error)
     } else {
       setStatus('up-to-date')
     }
@@ -49,6 +54,11 @@ function AndroidUpdateSection() {
           {status === 'up-to-date' && (
             <span className="text-[12px]" style={{ color: 'var(--success-text)' }}>已是最新</span>
           )}
+          {status === 'error' && (
+            <span className="text-[12px]" style={{ color: 'var(--danger-text)' }} title={errorMessage}>
+              检查失败
+            </span>
+          )}
           <button
             onClick={status === 'found' ? handleDownload : handleCheck}
             disabled={status === 'checking'}
@@ -61,7 +71,7 @@ function AndroidUpdateSection() {
           >
             {status === 'checking' && '检查中…'}
             {status === 'found' && '下载更新'}
-            {(status === 'idle' || status === 'up-to-date') && '检查更新'}
+            {(status === 'idle' || status === 'up-to-date' || status === 'error') && '检查更新'}
           </button>
         </div>
       </div>

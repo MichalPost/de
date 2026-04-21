@@ -173,7 +173,7 @@ export function DigitCryptoPage() {
                 onChange={e => { setNumber(e.target.value); setScanHint(null) }}
                 onKeyDown={handleKeyDown}
                 placeholder="请输入要处理的数字"
-                className="h-9 px-3 rounded-xl border text-[13px] font-mono outline-none transition-colors focus:ring-2"
+                className="h-11 px-3 rounded-xl border text-[13px] font-mono outline-none transition-colors focus:ring-2"
                 style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
               />
             </label>
@@ -200,7 +200,7 @@ export function DigitCryptoPage() {
                 onChange={e => setDigitKey(Number(e.target.value))}
                 onKeyDown={handleKeyDown}
                 min={0} max={9}
-                className="min-h-[2.75rem] px-3 rounded-xl border text-[13px] font-mono outline-none"
+                className="h-11 px-3 rounded-xl border text-[13px] font-mono outline-none"
                 style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
               />
             </label>
@@ -213,7 +213,7 @@ export function DigitCryptoPage() {
                 value={globalKey}
                 onChange={e => setGlobalKey(Number(e.target.value))}
                 onKeyDown={handleKeyDown}
-                className="min-h-[2.75rem] px-3 rounded-xl border text-[13px] font-mono outline-none"
+                className="h-11 px-3 rounded-xl border text-[13px] font-mono outline-none"
                 style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
               />
             </label>
