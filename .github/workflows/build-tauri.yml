@@ -190,12 +190,26 @@ jobs:
           mv apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk \
              apps/mobile/android/app/build/outputs/apk/debug/chemtools-android-${{ env.VERSION_NAME }}.apk
 
+      - name: 生成 Android 更新清单
+        shell: bash
+        run: |
+          cat > apps/mobile/android/app/build/outputs/apk/debug/latest-mobile.json <<EOF
+          {
+            "version": "${{ env.VERSION_NAME }}",
+            "downloadUrl": "https://github.com/${{ github.repository }}/releases/download/${{ needs.prepare.outputs.tag }}/chemtools-android-${{ env.VERSION_NAME }}.apk",
+            "releaseUrl": "https://github.com/${{ github.repository }}/releases/tag/${{ needs.prepare.outputs.tag }}",
+            "publishedAt": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          }
+          EOF
+
       - name: 上传 Android 到同一个 Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
           name: ChemTools ${{ needs.prepare.outputs.tag }}
-          files: apps/mobile/android/app/build/outputs/apk/debug/chemtools-android-${{ env.VERSION_NAME }}.apk
+          files: |
+            apps/mobile/android/app/build/outputs/apk/debug/chemtools-android-${{ env.VERSION_NAME }}.apk
+            apps/mobile/android/app/build/outputs/apk/debug/latest-mobile.json
           fail_on_unmatched_files: true
 
   build_ios:
@@ -261,8 +275,45 @@ jobs:
           files: apps/mobile/ios/build/Build/Products/Debug-iphonesimulator/chemtools-ios-simulator-${{ env.VERSION }}.zip
           fail_on_unmatched_files: true
 
+  verify_update_feeds:
+    needs: [prepare, build_desktop, build_android]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 验证桌面端 latest.json
+        run: |
+          set -euo pipefail
+          DESKTOP_VERSION="${{ needs.prepare.outputs.desktop_version }}"
+          URL="https://github.com/${{ github.repository }}/releases/latest/download/latest.json"
+          echo "Checking $URL"
+          for i in 1 2 3 4 5; do
+            if curl -fL --retry 3 --retry-delay 2 "$URL" -o latest.json; then
+              break
+            fi
+            echo "Retry $i failed, waiting..."
+            sleep 5
+          done
+          test -f latest.json
+          grep -F "$DESKTOP_VERSION" latest.json
+
+      - name: 验证移动端 latest-mobile.json
+        run: |
+          set -euo pipefail
+          MOBILE_VERSION="${{ needs.prepare.outputs.release_version }}"
+          URL="https://github.com/${{ github.repository }}/releases/latest/download/latest-mobile.json"
+          echo "Checking $URL"
+          for i in 1 2 3 4 5; do
+            if curl -fL --retry 3 --retry-delay 2 "$URL" -o latest-mobile.json; then
+              break
+            fi
+            echo "Retry $i failed, waiting..."
+            sleep 5
+          done
+          test -f latest-mobile.json
+          grep -F "\"version\": \"$MOBILE_VERSION\"" latest-mobile.json
+
   summary:
-    needs: [prepare, build_desktop, build_android, build_ios]
+    needs: [prepare, build_desktop, build_android, build_ios, verify_update_feeds]
     runs-on: ubuntu-latest
     if: ${{ always() }}
 
@@ -279,4 +330,5 @@ jobs:
             echo "- 桌面端: Windows / macOS / Linux"
             echo "- 手机端: Android APK"
             echo "- iOS 模拟器 ZIP: ${{ needs.build_ios.result == 'success' && '已上传' || '构建失败，未阻塞发布' }}"
+            echo "- 更新清单验证: ${{ needs.verify_update_feeds.result == 'success' && 'latest.json / latest-mobile.json 可访问' || '验证失败，请检查 Release 资产' }}"
           } >> $GITHUB_STEP_SUMMARY

@@ -4,9 +4,11 @@ import { BrowserRouter } from 'react-router-dom'
 import { App } from './app/App'
 import { initTheme } from '@chemtools/shared/store/themeStore'
 import '@chemtools/shared/styles.css'
+import { configureZXingWasm } from './lib/zxing'
 
 // Restore theme before first paint to avoid flash
 initTheme()
+configureZXingWasm()
 
 // Polyfill navigator.clipboard.writeText for Android WebView
 // (Capacitor WebView doesn't support the Clipboard API)
