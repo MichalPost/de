@@ -136,7 +136,7 @@ jobs:
           tagName: ${{ needs.prepare.outputs.tag }}
           releaseName: ChemTools ${{ needs.prepare.outputs.tag }}
           releaseId: ${{ needs.prepare.outputs.release_id }}
-          uploadUpdaterJson: ${{ matrix.platform == 'windows-latest' }}
+          includeUpdaterJson: ${{ matrix.platform == 'windows-latest' }}
           updaterJsonPreferNsis: ${{ matrix.platform == 'windows-latest' }}
 
   build_android:
