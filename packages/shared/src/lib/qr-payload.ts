@@ -40,23 +40,35 @@ function parseReagentPackage(parts: string[]): ParsedQrPayload | null {
   if (original.length < 5 || updated.length < 5) return null
 
   const originalFields: ParsedQrField[] = []
-  pushField(originalFields, '试剂包批号', original[0])
-  pushField(originalFields, '生产日期', original[1])
-  pushField(originalFields, '开包天数', original[2])
-  pushField(originalFields, '使用次数', original[3])
-  pushField(originalFields, '试剂包客户码', stripCodePrefix(original[4]))
+  const originalBatch = original[0]?.trim()
+  const originalDate = original[1]?.trim()
+  const originalOpenDays = original[2]?.trim()
+  const originalUsageCount = original[3]?.trim()
+  const originalCustomerCode = stripCodePrefix(original[4])
+
+  const updatedBatch = updated[0]?.trim()
+  const updatedDate = updated[1]?.trim()
+  const updatedOpenDays = updated[2]?.trim()
+  const updatedUsageCount = updated[3]?.trim()
+  const updatedCustomerCode = stripCodePrefix(updated[4])
+
+  pushField(originalFields, '试剂包批号', originalBatch, originalBatch !== updatedBatch)
+  pushField(originalFields, '生产日期', originalDate, originalDate !== updatedDate)
+  pushField(originalFields, '开包天数', originalOpenDays, originalOpenDays !== updatedOpenDays)
+  pushField(originalFields, '使用次数', originalUsageCount, originalUsageCount !== updatedUsageCount)
+  pushField(originalFields, '试剂包客户码', originalCustomerCode, originalCustomerCode !== updatedCustomerCode)
 
   const updatedFields: ParsedQrField[] = []
-  pushField(updatedFields, '试剂包批号', updated[0])
-  pushField(updatedFields, '生产日期', updated[1])
-  pushField(updatedFields, '开包天数', updated[2])
-  pushField(updatedFields, '使用次数', updated[3])
-  pushField(updatedFields, '改动后客户码', stripCodePrefix(updated[4]), true)
+  pushField(updatedFields, '试剂包批号', updatedBatch, originalBatch !== updatedBatch)
+  pushField(updatedFields, '生产日期', updatedDate, originalDate !== updatedDate)
+  pushField(updatedFields, '开包天数', updatedOpenDays, originalOpenDays !== updatedOpenDays)
+  pushField(updatedFields, '使用次数', updatedUsageCount, originalUsageCount !== updatedUsageCount)
+  pushField(updatedFields, '改动后客户码', updatedCustomerCode, originalCustomerCode !== updatedCustomerCode)
   pushField(updatedFields, '附加字段', parts[4])
 
   const deviceFields: ParsedQrField[] = []
-  pushField(deviceFields, '仪器编号', parts[5], true)
-  pushField(deviceFields, '加密数字', stripSuffix(parts[6]), true)
+  pushField(deviceFields, '仪器编号', parts[5])
+  pushField(deviceFields, '加密数字', stripSuffix(parts[6]))
 
   return {
     kind: 'reagent-package',
@@ -76,16 +88,18 @@ function parseInstrument(parts: string[]): ParsedQrPayload | null {
   if (original.length < 5 || updated.length < 5) return null
 
   const originalFields: ParsedQrField[] = []
-  pushField(originalFields, '仪器客户码', stripCodePrefix(original[4]))
+  const originalCustomerCode = stripCodePrefix(original[4])
+  const updatedCustomerCode = stripCodePrefix(updated[4])
+  pushField(originalFields, '仪器客户码', originalCustomerCode, originalCustomerCode !== updatedCustomerCode)
 
   const updatedFields: ParsedQrField[] = []
   pushField(updatedFields, '时间', updated[1])
-  pushField(updatedFields, '改动后客户码', stripCodePrefix(updated[4]), true)
+  pushField(updatedFields, '改动后客户码', updatedCustomerCode, originalCustomerCode !== updatedCustomerCode)
   pushField(updatedFields, '附加字段', parts[4])
 
   const deviceFields: ParsedQrField[] = []
-  pushField(deviceFields, '仪器编号', parts[5], true)
-  pushField(deviceFields, '加密数字', stripSuffix(parts[6]), true)
+  pushField(deviceFields, '仪器编号', parts[5])
+  pushField(deviceFields, '加密数字', stripSuffix(parts[6]))
 
   return {
     kind: 'instrument',
