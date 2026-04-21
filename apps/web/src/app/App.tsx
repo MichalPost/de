@@ -30,9 +30,31 @@ function UpdateChecker() {
 
   useEffect(() => {
     if (!isTauri) return
-    checkForUpdate().then(({ available, version, install }) => {
-      if (available && version && install) setUpdate({ version, install })
-    })
+
+    let cancelled = false
+    const retryDelays = [1200, 3500, 7000]
+
+    const runCheck = async () => {
+      for (const delay of retryDelays) {
+        if (cancelled) return
+        await new Promise(resolve => setTimeout(resolve, delay))
+        if (cancelled) return
+
+        const { available, version, install } = await checkForUpdate()
+        if (cancelled) return
+
+        if (available && version && install) {
+          setUpdate({ version, install })
+          return
+        }
+      }
+    }
+
+    void runCheck()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const handleInstall = async () => {
