@@ -11,6 +11,7 @@ import { useToast } from '../ui/Toast'
 import { ZapIcon, CheckIcon, CopyImgIcon, InfoIcon } from '../ui/icons'
 import { usePlatformOps } from '../lib/platformOps'
 import { usePdfSettingsStore } from '../store/pdfSettingsStore'
+import { useCopy } from '../ui/CopyButton'
 
 function getDefaultValues(): ReagentFormValues {
   const d = new Date()
@@ -212,12 +213,53 @@ export function EncodePage() {
 }
 
 function OutputField({ label, value }: { label: string; value: string }) {
+  const { copied, copy } = useCopy()
+  const clickable = Boolean(value)
+
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{label}</span>
+        {clickable && (
+          <span className="text-[10px]" style={{ color: copied ? 'var(--success-text)' : 'var(--text-faint)' }}>
+            {copied ? '已复制' : '点击复制'}
+          </span>
+        )}
+      </div>
       <div
-        className="h-9 px-3 flex items-center rounded-xl border font-mono text-[11px] overflow-hidden"
-        style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+        role={clickable ? 'button' : undefined}
+        tabIndex={clickable ? 0 : -1}
+        onClick={() => clickable && copy(value)}
+        onKeyDown={(e) => {
+          if (!clickable) return
+          if (e.key !== 'Enter' && e.key !== ' ') return
+          e.preventDefault()
+          copy(value)
+        }}
+        className="h-9 px-3 flex items-center rounded-xl border font-mono text-[11px] overflow-hidden outline-none transition-colors"
+        style={copied ? {
+          backgroundColor: 'var(--success-light)',
+          borderColor: 'var(--success-border)',
+          color: 'var(--success-text)',
+          cursor: 'pointer',
+        } : {
+          backgroundColor: 'var(--bg-input)',
+          borderColor: 'var(--border)',
+          color: 'var(--text-secondary)',
+          cursor: clickable ? 'pointer' : 'default',
+        }}
+        onMouseEnter={e => {
+          if (!clickable || copied) return
+          e.currentTarget.style.borderColor = 'var(--accent)'
+          e.currentTarget.style.backgroundColor = 'var(--accent-light)'
+          e.currentTarget.style.color = 'var(--accent-text)'
+        }}
+        onMouseLeave={e => {
+          if (!clickable || copied) return
+          e.currentTarget.style.borderColor = 'var(--border)'
+          e.currentTarget.style.backgroundColor = 'var(--bg-input)'
+          e.currentTarget.style.color = 'var(--text-secondary)'
+        }}
       >
         <span className="truncate">{value || '—'}</span>
       </div>
@@ -231,6 +273,7 @@ function BarcodeSection({ title, svg, ascii }: { title: string; svg: string | nu
   const { showToast } = useToast()
   const platform = usePlatformOps()
   const pdfBarcodeScale = usePdfSettingsStore((s) => s.pdfBarcodeScale)
+  const { copied: copiedAscii, copy: copyAscii } = useCopy()
 
   const handleCopyImage = async () => {
     if (!ascii) return
@@ -303,7 +346,30 @@ function BarcodeSection({ title, svg, ascii }: { title: string; svg: string | nu
         {svg
           ? <>
               <div dangerouslySetInnerHTML={{ __html: svg }} className="max-w-full w-full overflow-hidden [&>svg]:w-full [&>svg]:h-auto" />
-              <p className="mt-1.5 text-[12px] font-mono text-center break-all leading-tight" style={{ color: 'var(--barcode-text)', letterSpacing: '0.05em' }}>{ascii}</p>
+              <button
+                type="button"
+                onClick={() => ascii && copyAscii(ascii)}
+                disabled={!ascii}
+                title="复制 ASCII"
+                className="mt-1.5 text-[12px] font-mono text-center break-all leading-tight transition-colors cursor-pointer disabled:cursor-default w-full rounded-md px-2 py-1"
+                style={{
+                  color: copiedAscii ? 'var(--success-text)' : 'var(--barcode-text)',
+                  letterSpacing: '0.05em',
+                  backgroundColor: copiedAscii ? 'var(--success-light)' : 'transparent',
+                }}
+                onMouseEnter={e => {
+                  if (!ascii || copiedAscii) return
+                  e.currentTarget.style.backgroundColor = 'var(--accent-light)'
+                  e.currentTarget.style.color = 'var(--accent-text)'
+                }}
+                onMouseLeave={e => {
+                  if (!ascii || copiedAscii) return
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = 'var(--barcode-text)'
+                }}
+              >
+                {ascii}
+              </button>
             </>
           : <span className="text-[12px] m-auto" style={{ color: 'var(--text-muted)' }}>生成编码后显示</span>
         }

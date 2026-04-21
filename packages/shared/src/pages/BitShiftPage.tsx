@@ -168,24 +168,6 @@ export function BitShiftPage() {
             <ResultRow label="10进制 (结果)" value={result?.decResult ?? ''}  highlight />
           </div>
         </Card>
-
-        <Card>
-          <CardHeader tag={{ label: 'INFO', color: 'green' }} title="算法说明" />
-          <div className="p-4 flex flex-col gap-2.5">
-            {[
-              { label: '算法',     value: '自定义位移运算' },
-              { label: '支持进制', value: '2 / 10 / 16 进制' },
-              { label: '移位方式', value: '左移 (<<) / 右移 (>>)，可指定补位值' },
-              { label: '快捷操作', value: '仪器 = 移位10，试剂包 = 移位12' },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex flex-col gap-1 p-3 rounded-xl border"
-                style={{ backgroundColor: 'var(--bg-input)', borderColor: 'var(--border)' }}>
-                <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</span>
-                <span className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>{value}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
       </div>
     </div>
   )

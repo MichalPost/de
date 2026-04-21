@@ -2,7 +2,7 @@ import { readBarcodesFromImageFile, type ReaderOptions } from 'zxing-wasm/reader
 import { asciiToBytes, bytesToHex } from './utils'
 
 const READER_OPTIONS: ReaderOptions = {
-  formats: ['Code128'],
+  formats: ['Code128', 'QRCode'],
   tryHarder: true,
   tryRotate: true,
   tryInvert: true,
@@ -73,4 +73,13 @@ export function toDecodeHex(text: string): string | null {
   if (/^[0-9A-Fa-f]{44}$/.test(t)) return t
   // base69 ASCII (with or without '*')
   return longAsciiToDecodeHex(t)
+}
+
+/**
+ * Extract the last contiguous digit sequence from scanned text.
+ * Useful for QR payloads that end with a serial or encrypted number.
+ */
+export function extractTrailingDigits(text: string): string | null {
+  const match = text.match(/(\d+)(?![\s\S]*\d)/)
+  return match?.[1] ?? null
 }
