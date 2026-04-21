@@ -41,6 +41,7 @@ export function DigitCryptoPage() {
   const [parsedQrPayload, setParsedQrPayload] = useState<ParsedQrPayload | null>(null)
   const { showToast } = useToast()
   const platform = usePlatformOps()
+  const dropzoneScanning = scanning && !scanHint && !scanRawText && !error
 
   const copyExtractedNumber = () => {
     if (!scanExtractedNumber) return
@@ -115,7 +116,7 @@ export function DigitCryptoPage() {
               : <StatusBar color="purple">输入数字和密钥后点击加密或解密，结果将同步显示。</StatusBar>
           }
 
-          <ImageDropZone onFiles={handleScanFiles} scanning={scanning} label="拖入二维码图片自动提取末尾数字并回填解密" />
+          <ImageDropZone onFiles={handleScanFiles} scanning={dropzoneScanning} label="拖入二维码图片自动提取末尾数字并回填解密" />
 
           {scanRawText && (
             <div className="rounded-2xl border p-3 flex flex-col gap-2" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-input)' }}>
