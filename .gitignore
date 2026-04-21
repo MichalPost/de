@@ -14,6 +14,10 @@ apps/mobile/android/app/build/
 apps/mobile/android/.gradle/
 apps/mobile/android/local.properties
 apps/mobile/android/app/release/
+apps/mobile/android/keystore.properties
+apps/mobile/android/*.keystore
+apps/mobile/android/*.jks
+apps/mobile/android/*.keystore.base64.txt
 
 # System
 .DS_Store

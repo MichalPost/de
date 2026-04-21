@@ -9,6 +9,7 @@ import { extractTrailingDigits, scanBarcodeFile } from '../lib/barcodeReader'
 import { usePlatformOps } from '../lib/platformOps'
 import { CopyButton } from '../ui/CopyButton'
 import { parseQrPayload, type ParsedQrPayload } from '../lib/qr-payload'
+import { InlineChoiceGroup } from '../ui/InlineChoiceGroup'
 
 function ResultRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
@@ -180,15 +181,14 @@ export function DigitCryptoPage() {
             {/* 操作类型 */}
             <label className="flex flex-col gap-1">
               <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>操作类型</span>
-              <select
+              <InlineChoiceGroup
+                options={[
+                  { value: 'decrypt', label: '解密' },
+                  { value: 'encrypt', label: '加密' },
+                ]}
                 value={operation}
-                onChange={e => { setOperation(e.target.value as 'encrypt' | 'decrypt'); setScanHint(null) }}
-                className="h-9 px-3 rounded-xl border text-[13px] outline-none"
-                style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
-              >
-                <option value="decrypt">解密</option>
-                <option value="encrypt">加密</option>
-              </select>
+                onChange={(value) => { setOperation(value as 'encrypt' | 'decrypt'); setScanHint(null) }}
+              />
             </label>
 
             {/* 逐位密钥 */}

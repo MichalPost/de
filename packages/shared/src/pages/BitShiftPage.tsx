@@ -4,6 +4,7 @@ import { Button } from '../ui/Button'
 import { calculateShift, type ShiftInput, type ShiftResult, type BaseType, type ShiftMethod } from '../lib/bit-shift'
 import { ZapIcon } from '../ui/icons'
 import { useToast } from '../ui/Toast'
+import { InlineChoiceGroup } from '../ui/InlineChoiceGroup'
 
 const BASE_OPTIONS: { value: BaseType; label: string }[] = [
   { value: '10', label: '10进制 (dec)' },
@@ -92,55 +93,47 @@ export function BitShiftPage() {
             {/* 原数类型 */}
             <label className="flex flex-col gap-1">
               <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>原数类型</span>
-              <select
+              <InlineChoiceGroup
+                options={BASE_OPTIONS}
                 value={base}
-                onChange={e => setBase(e.target.value as BaseType)}
-                className="h-9 px-3 rounded-xl border text-[13px] outline-none"
-                style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
-              >
-                {BASE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+                onChange={(value) => setBase(value as BaseType)}
+              />
             </label>
 
             {/* 移位数 */}
             <label className="flex flex-col gap-1">
               <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>移位数</span>
-              <select
-                value={shift}
-                onChange={e => setShift(Number(e.target.value))}
-                className="h-9 px-3 rounded-xl border text-[13px] outline-none"
-                style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
-              >
-                {SHIFT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.value}</option>)}
-              </select>
+              <InlineChoiceGroup
+                options={SHIFT_OPTIONS.map((o) => ({ value: String(o.value), label: String(o.value) }))}
+                value={String(shift)}
+                onChange={(value) => setShift(Number(value))}
+              />
             </label>
 
             {/* 计算方式 */}
             <label className="flex flex-col gap-1">
               <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>计算方式</span>
-              <select
+              <InlineChoiceGroup
+                options={[
+                  { value: '>>', label: '右移 (>>)' },
+                  { value: '<<', label: '左移 (<<)' },
+                ]}
                 value={method}
-                onChange={e => setMethod(e.target.value as ShiftMethod)}
-                className="h-9 px-3 rounded-xl border text-[13px] outline-none"
-                style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
-              >
-                <option value=">>">右移 (&gt;&gt;)</option>
-                <option value="<<">左移 (&lt;&lt;)</option>
-              </select>
+                onChange={(value) => setMethod(value as ShiftMethod)}
+              />
             </label>
 
             {/* 新位补数 */}
             <label className="flex flex-col gap-1">
               <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>新位补数</span>
-              <select
-                value={padding}
-                onChange={e => setPadding(Number(e.target.value) as 0 | 1)}
-                className="h-9 px-3 rounded-xl border text-[13px] outline-none"
-                style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
-              >
-                <option value={0}>0</option>
-                <option value={1}>1</option>
-              </select>
+              <InlineChoiceGroup
+                options={[
+                  { value: '0', label: '补 0' },
+                  { value: '1', label: '补 1' },
+                ]}
+                value={String(padding)}
+                onChange={(value) => setPadding(Number(value) as 0 | 1)}
+              />
             </label>
           </div>
 
