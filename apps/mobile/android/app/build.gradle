@@ -28,9 +28,17 @@ android {
             def storePasswordValue = keystoreProperties['storePassword'] ?: System.getenv('ANDROID_KEYSTORE_PASSWORD')
             def keyAliasValue = keystoreProperties['keyAlias'] ?: System.getenv('ANDROID_KEY_ALIAS')
             def keyPasswordValue = keystoreProperties['keyPassword'] ?: System.getenv('ANDROID_KEY_PASSWORD')
+            def resolvedStoreFile = null
 
-            if (storeFilePath && storePasswordValue && keyAliasValue && keyPasswordValue) {
-                storeFile file(storeFilePath)
+            if (storeFilePath) {
+                resolvedStoreFile = new File(storeFilePath)
+                if (!resolvedStoreFile.isAbsolute()) {
+                    resolvedStoreFile = rootProject.file(storeFilePath)
+                }
+            }
+
+            if (resolvedStoreFile && storePasswordValue && keyAliasValue && keyPasswordValue) {
+                storeFile resolvedStoreFile
                 storePassword storePasswordValue
                 keyAlias keyAliasValue
                 keyPassword keyPasswordValue
