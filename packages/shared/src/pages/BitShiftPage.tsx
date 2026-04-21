@@ -85,7 +85,7 @@ export function BitShiftPage() {
                 onChange={e => setNumber(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="请输入数字"
-                className="h-9 px-3 rounded-xl border text-[13px] font-mono outline-none transition-colors focus:ring-2"
+                className="min-h-[2.75rem] px-3 rounded-xl border text-[13px] font-mono outline-none transition-colors focus:ring-2"
                 style={{ borderColor: 'var(--border-input)', backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)' }}
               />
             </label>
@@ -137,13 +137,13 @@ export function BitShiftPage() {
             </label>
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="ghost" size="md" onClick={() => { setShift(10); calculate(10) }}>仪器</Button>
-            <Button variant="ghost" size="md" onClick={() => { setShift(12); calculate(12) }}>试剂包</Button>
-            <Button variant="primary" size="md" onClick={() => calculate()} className="flex-1 justify-center">
+          <div className="grid grid-cols-2 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto] gap-2 items-stretch">
+            <Button variant="ghost" size="md" onClick={() => { setShift(10); calculate(10) }} className="w-full justify-center">仪器</Button>
+            <Button variant="ghost" size="md" onClick={() => { setShift(12); calculate(12) }} className="w-full justify-center">试剂包</Button>
+            <Button variant="primary" size="md" onClick={() => calculate()} className="col-span-2 sm:col-span-1 w-full justify-center">
               <ZapIcon /> 计算
             </Button>
-            <Button variant="ghost" size="md" onClick={clear}>清除</Button>
+            <Button variant="ghost" size="md" onClick={clear} className="w-full justify-center">清除</Button>
           </div>
         </div>
       </Card>

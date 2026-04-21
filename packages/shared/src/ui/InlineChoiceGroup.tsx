@@ -9,7 +9,7 @@ export function InlineChoiceGroup({
 }) {
   return (
     <div
-      className="grid h-9 gap-1 rounded-xl border p-1"
+      className="grid gap-1 rounded-xl border p-1 min-h-[2.75rem] items-stretch"
       style={{
         borderColor: 'var(--border-input)',
         backgroundColor: 'var(--bg-input)',
@@ -23,7 +23,7 @@ export function InlineChoiceGroup({
             key={option.value}
             type="button"
             onClick={() => onChange(option.value)}
-            className="h-full rounded-lg px-3 text-[12px] font-medium transition-colors cursor-pointer"
+            className="min-h-[2.25rem] h-full rounded-lg px-2 py-1 text-[12px] leading-[1.15] font-medium transition-colors cursor-pointer flex items-center justify-center text-center break-words"
             style={active ? {
               backgroundColor: 'var(--accent)',
               color: '#fff',
