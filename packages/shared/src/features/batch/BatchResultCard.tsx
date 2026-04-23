@@ -1,10 +1,10 @@
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 import type { BatchGeneratedRecord } from './types'
 import { Button } from '../../ui/Button'
 import { CopyButton, useCopyAsync } from '../../ui/CopyButton'
 import { usePlatformOps } from '../../lib/platformOps'
-import { barcodeToPngDataUrl } from '../../lib/barcode'
+import { barcodeToPngDataUrl, renderBarcodeToCanvas } from '../../lib/barcode'
 import { motion } from 'motion/react'
 import { ImgIcon, CheckIcon } from '../../ui/icons'
 import { getBatchBarcodeOptions } from './layout'
@@ -18,6 +18,29 @@ export const BatchResultCard = memo(function BatchResultCard({ record, index = 0
     () => barcodeToPngDataUrl(record.shortAscii, getBatchBarcodeOptions('resultCard', 'short')),
     [record.shortAscii],
   )
+
+  const [copyingCombined, setCopyingCombined] = useState(false)
+  const [copiedCombined, setCopiedCombined] = useState(false)
+
+  const handleCopyCombined = async () => {
+    setCopyingCombined(true)
+    try {
+      await copyCombinedBarcodeImage(record.encodedAscii, record.shortAscii)
+      setCopiedCombined(true)
+      setTimeout(() => setCopiedCombined(false), 1500)
+    } catch {
+      // Fallback: download instead
+      const blob = await createCombinedBarcodeBlob(record.encodedAscii, record.shortAscii)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `combined_${record.reagentId}_${record.index}.png`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setCopyingCombined(false)
+    }
+  }
 
   return (
     <motion.div
@@ -53,9 +76,56 @@ export const BatchResultCard = memo(function BatchResultCard({ record, index = 0
           compact
         />
       </div>
+
+      <button
+        type="button"
+        onClick={handleCopyCombined}
+        disabled={copyingCombined}
+        className={twMerge(
+          'flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-[12px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40',
+          copiedCombined
+            ? 'border-ct-success-border bg-ct-success-soft text-ct-success-foreground'
+            : 'border-ct-border bg-ct-surface-input text-ct-content-primary hover:border-ct-brand hover:bg-ct-brand-soft hover:text-ct-brand-foreground',
+        )}
+      >
+        {copiedCombined ? <CheckIcon /> : <ImgIcon />}
+        {copiedCombined ? '已复制长短码图片' : copyingCombined ? '复制中…' : '复制长短码图片'}
+      </button>
     </motion.div>
   )
 })
+
+async function createCombinedBarcodeBlob(longAscii: string, shortAscii: string): Promise<Blob> {
+  const longCanvas = renderBarcodeToCanvas(longAscii, { width: 1.4, height: 64, displayValue: true, margin: 8 })
+  const shortCanvas = renderBarcodeToCanvas(shortAscii, { width: 2, height: 64, displayValue: true, margin: 8 })
+
+  const combinedCanvas = document.createElement('canvas')
+  const padding = 16
+  const gap = 12
+  combinedCanvas.width = Math.max(longCanvas.width, shortCanvas.width) + padding * 2
+  combinedCanvas.height = longCanvas.height + shortCanvas.height + gap + padding * 2
+
+  const ctx = combinedCanvas.getContext('2d')!
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height)
+
+  const longX = (combinedCanvas.width - longCanvas.width) / 2
+  const shortX = (combinedCanvas.width - shortCanvas.width) / 2
+  ctx.drawImage(longCanvas, longX, padding)
+  ctx.drawImage(shortCanvas, shortX, padding + longCanvas.height + gap)
+
+  return new Promise((resolve, reject) => {
+    combinedCanvas.toBlob(
+      blob => blob ? resolve(blob) : reject(new Error('toBlob failed')),
+      'image/png',
+    )
+  })
+}
+
+async function copyCombinedBarcodeImage(longAscii: string, shortAscii: string): Promise<void> {
+  const blob = await createCombinedBarcodeBlob(longAscii, shortAscii)
+  await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+}
 
 const BarcodeBlock = memo(function BarcodeBlock({
   label, ascii, previewUrl, filenameBase, compact,

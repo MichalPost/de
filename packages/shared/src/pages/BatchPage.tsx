@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { twMerge } from 'tailwind-merge'
 import { Card, CardHeader, StatusBar } from '../ui/Card'
@@ -418,12 +418,80 @@ function InputPanel({ activeTemplate, agentOverride, customerOverride, serialCou
           留空则使用模板中的代理商和客户编号
         </div>
 
+        <ExpiryCalculator storageHalfMonths={activeTemplate.storageHalfMonths} />
+
         <Button variant="success" size="md" onClick={onGenerate}
           className={`w-full justify-center ${running ? 'opacity-60 pointer-events-none' : ''}`}>
           {running ? <SpinIcon /> : <ZapIcon />} {running ? '生成中…' : '批量生成'}
         </Button>
       </div>
     </Card>
+  )
+}
+
+// ── ExpiryCalculator ──────────────────────────────────────────────────────────
+function ExpiryCalculator({ storageHalfMonths }: { storageHalfMonths: number }) {
+  const [mfgDate, setMfgDate] = useState('')
+
+  const result = useMemo(() => {
+    if (!mfgDate) return null
+    const [y, m, d] = mfgDate.split('-').map(Number)
+    if (!y || !m || !d) return null
+    const mfg = new Date(y, m - 1, d)
+    if (isNaN(mfg.getTime())) return null
+    // storageHalfMonths × 15 days = total storage days
+    const storageDays = storageHalfMonths * 15
+    const expiry = new Date(mfg.getTime() + storageDays * 86400_000)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const diffMs = expiry.getTime() - today.getTime()
+    const daysLeft = Math.ceil(diffMs / 86400_000)
+    return { expiry, daysLeft }
+  }, [mfgDate, storageHalfMonths])
+
+  const expiryStr = result
+    ? result.expiry.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    : null
+
+  const statusColor = result
+    ? result.daysLeft < 0
+      ? 'text-ct-danger-foreground'
+      : result.daysLeft <= 30
+        ? 'text-amber-500'
+        : 'text-ct-success-foreground'
+    : 'text-ct-content-muted'
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-ct-border bg-ct-surface-input p-3">
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-ct-content-muted">有效期计算器</p>
+      <div className="flex items-end gap-2 flex-wrap">
+        <label className="flex flex-col gap-1">
+          <span className="text-[11px] text-ct-content-muted">生产日期</span>
+          <input
+            type="date"
+            value={mfgDate}
+            onChange={e => setMfgDate(e.target.value)}
+            className="h-9 rounded-xl border border-ct-border-input bg-ct-surface-card px-3 text-[13px] font-mono text-ct-content-primary outline-hidden focus:border-ct-brand focus:ring-4 focus:ring-ct-brand/15 transition-[border-color,box-shadow] duration-200"
+          />
+        </label>
+        <div className="flex flex-col gap-1 pb-0.5">
+          <span className="text-[11px] text-ct-content-muted">储存半月数</span>
+          <span className="flex h-9 items-center rounded-xl border border-ct-border bg-ct-surface-card px-3 text-[13px] font-mono text-ct-content-secondary">
+            {storageHalfMonths} <span className="ml-1 text-[11px] text-ct-content-muted">× 15 天</span>
+          </span>
+        </div>
+      </div>
+      {result ? (
+        <div className="flex items-center justify-between rounded-lg bg-ct-surface-card px-3 py-2">
+          <span className="text-[12px] text-ct-content-secondary">到期日：<span className="font-mono font-medium text-ct-content-primary">{expiryStr}</span></span>
+          <span className={`text-[12px] font-semibold ${statusColor}`}>
+            {result.daysLeft < 0 ? `已过期 ${Math.abs(result.daysLeft)} 天` : `还剩 ${result.daysLeft} 天`}
+          </span>
+        </div>
+      ) : (
+        <p className="text-[11px] text-ct-content-faint">选择生产日期后自动计算</p>
+      )}
+    </div>
   )
 }
 
