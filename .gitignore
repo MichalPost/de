@@ -23,6 +23,10 @@ apps/mobile/android/*.keystore.base64.txt
 .DS_Store
 Thumbs.db
 
+# IDE
+.vscode/
+.kiro/
+
 # Env
 *.local
 .env
