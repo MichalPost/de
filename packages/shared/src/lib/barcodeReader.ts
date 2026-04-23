@@ -4,15 +4,13 @@ import { asciiToBytes, bytesToHex } from './utils'
 // ─── PDF support ────────────────────────────────────────────────────────────
 
 async function pdfToImageBlobs(file: File | Blob): Promise<Blob[]> {
-  const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
-  // Use the bundled legacy worker (no separate worker file needed)
-  GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.mjs',
-    import.meta.url,
-  ).toString()
+  const pdfjs = await import('pdfjs-dist')
+  // Disable worker entirely — runs on main thread.
+  // This avoids worker URL resolution issues in Tauri / bundled environments.
+  pdfjs.GlobalWorkerOptions.workerSrc = ''
 
   const arrayBuffer = await file.arrayBuffer()
-  const pdf = await getDocument({ data: arrayBuffer }).promise
+  const pdf = await pdfjs.getDocument({ data: arrayBuffer, useWorkerFetch: false, isEvalSupported: false, useSystemFonts: true }).promise
   const blobs: Blob[] = []
 
   for (let i = 1; i <= pdf.numPages; i++) {
