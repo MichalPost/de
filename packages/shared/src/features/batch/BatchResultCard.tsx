@@ -2,11 +2,11 @@ import { memo, useMemo, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 import type { BatchGeneratedRecord } from './types'
 import { Button } from '../../ui/Button'
-import { CopyButton, useCopyAsync } from '../../ui/CopyButton'
+import { CopyButton, useCopy, useCopyAsync } from '../../ui/CopyButton'
 import { usePlatformOps } from '../../lib/platformOps'
 import { barcodeToPngDataUrl, renderBarcodeToCanvas } from '../../lib/barcode'
 import { motion } from 'motion/react'
-import { ImgIcon, CheckIcon } from '../../ui/icons'
+import { ImgIcon, CheckIcon, CopyIcon } from '../../ui/icons'
 import { getBatchBarcodeOptions } from './layout'
 
 export const BatchResultCard = memo(function BatchResultCard({ record, index = 0 }: { record: BatchGeneratedRecord; index?: number }) {
@@ -60,6 +60,9 @@ export const BatchResultCard = memo(function BatchResultCard({ record, index = 0
         </div>
         <span className="text-[11px] text-ct-content-faint">#{record.index}</span>
       </div>
+
+      {/* Quick-copy text row */}
+      <QuickCopyRow longAscii={record.encodedAscii} shortAscii={record.shortAscii} />
 
       <div className="flex flex-col gap-3">
         <BarcodeBlock
@@ -125,6 +128,39 @@ async function createCombinedBarcodeBlob(longAscii: string, shortAscii: string):
 async function copyCombinedBarcodeImage(longAscii: string, shortAscii: string): Promise<void> {
   const blob = await createCombinedBarcodeBlob(longAscii, shortAscii)
   await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+}
+
+const QuickCopyRow = memo(function QuickCopyRow({ longAscii, shortAscii }: { longAscii: string; shortAscii: string }) {
+  const { copied: copiedLong, copy: copyLong } = useCopy()
+  const { copied: copiedShort, copy: copyShort } = useCopy()
+  const { copied: copiedBoth, copy: copyBoth } = useCopy()
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <span className="text-[11px] text-ct-content-muted shrink-0">快捷复制</span>
+      <QuickCopyBtn label="长码" copied={copiedLong} onClick={() => copyLong(longAscii)} />
+      <QuickCopyBtn label="短码" copied={copiedShort} onClick={() => copyShort(shortAscii)} />
+      <QuickCopyBtn label="长短码" copied={copiedBoth} onClick={() => copyBoth(`${longAscii}\n${shortAscii}`)} />
+    </div>
+  )
+})
+
+function QuickCopyBtn({ label, copied, onClick }: { label: string; copied: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={twMerge(
+        'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] transition-colors',
+        copied
+          ? 'border-ct-success-border bg-ct-success-soft text-ct-success-foreground'
+          : 'border-ct-border bg-ct-surface-input text-ct-content-muted hover:border-ct-brand hover:bg-ct-brand-soft hover:text-ct-brand-foreground',
+      )}
+    >
+      {copied ? <CheckIcon /> : <CopyIcon className="w-3 h-3" />}
+      {copied ? '已复制' : label}
+    </button>
+  )
 }
 
 const BarcodeBlock = memo(function BarcodeBlock({
