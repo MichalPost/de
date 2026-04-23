@@ -56,7 +56,37 @@ jobs:
           mv apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk \
              apps/mobile/android/app/build/outputs/apk/debug/chemtools-android-${{ env.VERSION_NAME }}.apk
 
-      - name: 上传手动构建产物
+      - name: 生成更新清单 latest-mobile.json
+        run: |
+          APK_NAME="chemtools-android-${{ env.VERSION_NAME }}.apk"
+          REPO="${{ github.repository }}"
+          TAG="android-latest"
+          DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${APK_NAME}"
+          cat > latest-mobile.json <<EOF
+          {
+            "version": "${{ env.VERSION_NAME }}",
+            "downloadUrl": "${DOWNLOAD_URL}",
+            "releaseUrl": "https://github.com/${REPO}/releases/tag/${TAG}",
+            "publishedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: 发布 Release 并上传 APK 和更新清单
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Android 最新版 ${{ env.VERSION_NAME }}
+          body: |
+            自动构建版本 ${{ env.VERSION_NAME }}
+            构建编号：${{ github.run_number }}
+          files: |
+            apps/mobile/android/app/build/outputs/apk/debug/chemtools-android-${{ env.VERSION_NAME }}.apk
+            latest-mobile.json
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 上传手动构建产物（备份）
         uses: actions/upload-artifact@v4
         with:
           name: android-debug-${{ env.VERSION_NAME }}
