@@ -58,6 +58,12 @@ interface ResultToolbarProps {
   onCopyImage: () => void
   onExportPng: () => void
   onExportPdf: () => void
+  onCopyLongText: () => void
+  onCopyShortText: () => void
+  onCopyBothText: () => void
+  copyLongTextState: { copied: boolean }
+  copyShortTextState: { copied: boolean }
+  copyBothTextState: { copied: boolean }
 }
 
 interface ResultHeaderProps {
@@ -523,6 +529,32 @@ function ResultPanel({ records, currentPageRecords, viewMode, printMode, printCo
 
   const effectiveMode = printMode === 'auto' ? undefined : printMode as 'long' | 'short' | 'both'
 
+  const { showToast } = useToast()
+  const [copiedLong, setCopiedLong] = useState(false)
+  const [copiedShort, setCopiedShort] = useState(false)
+  const [copiedBoth, setCopiedBoth] = useState(false)
+
+  const makeCopyTextHandler = (getText: () => string, setCopied: (v: boolean) => void) => () => {
+    const text = getText()
+    if (!text) return
+    navigator.clipboard.writeText(text)
+      .then(() => { setCopied(true); showToast('复制成功'); setTimeout(() => setCopied(false), 1500) })
+      .catch(() => showToast('复制失败', 'error'))
+  }
+
+  const handleCopyLongText = makeCopyTextHandler(
+    () => records.map(r => r.encodedAscii).join('\n'),
+    setCopiedLong,
+  )
+  const handleCopyShortText = makeCopyTextHandler(
+    () => records.map(r => r.shortAscii).join('\n'),
+    setCopiedShort,
+  )
+  const handleCopyBothText = makeCopyTextHandler(
+    () => records.map(r => `${r.encodedAscii}\n${r.shortAscii}`).join('\n'),
+    setCopiedBoth,
+  )
+
   return (
     <Card className="flex-1 flex flex-col lg:min-h-0 min-w-0">
       <ResultHeader
@@ -550,6 +582,12 @@ function ResultPanel({ records, currentPageRecords, viewMode, printMode, printCo
         onCopyImage={onCopyImage}
         onExportPng={onExportPng}
         onExportPdf={onExportPdf}
+        onCopyLongText={handleCopyLongText}
+        onCopyShortText={handleCopyShortText}
+        onCopyBothText={handleCopyBothText}
+        copyLongTextState={{ copied: copiedLong }}
+        copyShortTextState={{ copied: copiedShort }}
+        copyBothTextState={{ copied: copiedBoth }}
       />
 
       {/* Content */}
@@ -642,6 +680,12 @@ function ResultToolbar({
   onCopyImage,
   onExportPng,
   onExportPdf,
+  onCopyLongText,
+  onCopyShortText,
+  onCopyBothText,
+  copyLongTextState,
+  copyShortTextState,
+  copyBothTextState,
 }: ResultToolbarProps) {
   const hasRecords = records.length > 0
   const disabledClassName = 'opacity-40 pointer-events-none'
@@ -703,6 +747,27 @@ function ResultToolbar({
       </ToolbarSection>
       <ToolbarSpacer />
       <ToolbarSection>
+        <ToolbarActionButton
+          icon={copyLongTextState.copied ? <CheckIcon /> : <CopyTextIcon />}
+          label={copyLongTextState.copied ? '已复制' : '复制长码'}
+          accent={copyLongTextState.copied ? 'success' : undefined}
+          onClick={onCopyLongText}
+          className={!hasRecords ? disabledClassName : undefined}
+        />
+        <ToolbarActionButton
+          icon={copyShortTextState.copied ? <CheckIcon /> : <CopyTextIcon />}
+          label={copyShortTextState.copied ? '已复制' : '复制短码'}
+          accent={copyShortTextState.copied ? 'success' : undefined}
+          onClick={onCopyShortText}
+          className={!hasRecords ? disabledClassName : undefined}
+        />
+        <ToolbarActionButton
+          icon={copyBothTextState.copied ? <CheckIcon /> : <CopyTextIcon />}
+          label={copyBothTextState.copied ? '已复制' : '复制长短码'}
+          accent={copyBothTextState.copied ? 'success' : undefined}
+          onClick={onCopyBothText}
+          className={!hasRecords ? disabledClassName : undefined}
+        />
         {copyImageState.copied ? (
           <ToolbarActionButton
             icon={<CheckIcon />}
@@ -746,3 +811,4 @@ function CopyImgIcon() { return <svg className="w-3.5 h-3.5" viewBox="0 0 24 24"
 function CheckIcon() { return <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> }
 function FileTextIcon() { return <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> }
 function InfoIcon({ className }: { className?: string }) { return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> }
+function CopyTextIcon() { return <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V4a2 2 0 0 1 2-2h12"/><line x1="12" y1="13" x2="17" y2="13"/><line x1="12" y1="17" x2="17" y2="17"/></svg> }
