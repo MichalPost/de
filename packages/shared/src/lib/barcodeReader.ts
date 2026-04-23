@@ -22,7 +22,7 @@ async function pdfToImageBlobs(file: File | Blob): Promise<Blob[]> {
     canvas.width = viewport.width
     canvas.height = viewport.height
     const ctx = canvas.getContext('2d')!
-    await page.render({ canvasContext: ctx, viewport }).promise
+    await page.render({ canvas, canvasContext: ctx, viewport }).promise
     const blob = await new Promise<Blob>((res, rej) =>
       canvas.toBlob(b => (b ? res(b) : rej(new Error('canvas toBlob failed'))), 'image/png'),
     )
