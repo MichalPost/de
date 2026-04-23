@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, type KeyboardEvent } from 'react'
+import { useState, useCallback, useRef, type KeyboardEvent, type ChangeEvent } from 'react'
 import { useForm, type FieldErrors, type Resolver, type SubmitErrorHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardHeader, StatusBar } from '../ui/Card'
@@ -48,9 +48,28 @@ const FIELD_DEFS: { id: keyof ReagentFormValues; label: string; min: number; max
 
 type Result = ReturnType<typeof buildLongCode>
 
+/** 根据天数计算生产日期和半月数，填入表单 */
+function calcDateFromDays(days: number): {
+  year: string; month: string; day: string
+  storageHalfMonths: number; openHalfMonths: number
+} {
+  const halfMonths = days <= 15 ? 1 : 2
+  const offset = days <= 15 ? -15 + days : -30 + days
+  const d = new Date()
+  d.setDate(d.getDate() + offset)
+  return {
+    year: String(d.getFullYear()).slice(-2).padStart(2, '0'),
+    month: String(d.getMonth() + 1).padStart(2, '0'),
+    day: String(d.getDate()).padStart(2, '0'),
+    storageHalfMonths: halfMonths,
+    openHalfMonths: halfMonths,
+  }
+}
+
 export function EncodePage() {
   const [result, setResult] = useState<Result | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [daysInput, setDaysInput] = useState('')
   const fieldRefs = useRef<Partial<Record<keyof ReagentFormValues, HTMLInputElement | null>>>({})
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ReagentFormValues>({
     resolver: zodResolver(reagentFormSchema) as Resolver<ReagentFormValues>,
@@ -96,7 +115,19 @@ export function EncodePage() {
     reset(getDefaultValues())
     setResult(null)
     setSubmitError(null)
+    setDaysInput('')
   }, [reset])
+
+  const handleDaysApply = useCallback(() => {
+    const days = parseInt(daysInput, 10)
+    if (isNaN(days) || days < 1) return
+    const { year, month, day, storageHalfMonths, openHalfMonths } = calcDateFromDays(days)
+    setValue('manufactureYear', year, { shouldValidate: true })
+    setValue('manufactureMonth', month, { shouldValidate: true })
+    setValue('manufactureDay', day, { shouldValidate: true })
+    setValue('storageHalfMonths', storageHalfMonths, { shouldValidate: true })
+    setValue('openHalfMonths', openHalfMonths, { shouldValidate: true })
+  }, [daysInput, setValue])
 
   const hasErrors = Object.keys(errors).length > 0
   const handleGenerate = handleSubmit(onSubmit, onInvalid)
@@ -120,6 +151,32 @@ export function EncodePage() {
               ? <StatusBar color="indigo"><span className="text-ct-danger-foreground">请修正红色字段后再生成</span></StatusBar>
               : <StatusBar color="indigo">录入参数后点击生成编码，长码、短码和条码预览将同步刷新。</StatusBar>
           }
+
+          <div>
+            <p className="mb-3 text-[11px] font-semibold tracking-widest uppercase text-ct-content-muted">天数快速填充</p>
+            <div className="flex items-end gap-2">
+              <label className="flex flex-col gap-1 w-28">
+                <span className="text-[11px] font-medium text-ct-content-muted">天数</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={daysInput}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setDaysInput(e.target.value)}
+                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') { e.preventDefault(); handleDaysApply() } }}
+                  placeholder="如 2 或 20"
+                  className="h-9 rounded-xl border border-ct-border-input bg-ct-surface-input px-3 text-[13px] font-mono text-ct-content-primary outline-hidden focus:border-ct-brand focus:ring-4 focus:ring-ct-brand/15 transition-[background-color,border-color,color,box-shadow] duration-200"
+                />
+              </label>
+              <Button variant="primary" size="md" onClick={handleDaysApply} disabled={!daysInput || isNaN(parseInt(daysInput, 10))}>
+                自动填充
+              </Button>
+              {daysInput && !isNaN(parseInt(daysInput, 10)) && parseInt(daysInput, 10) >= 1 && (
+                <span className="text-[11px] text-ct-content-muted pb-1">
+                  → 半月 {parseInt(daysInput, 10) <= 15 ? 1 : 2}，生产日 {(() => { const days = parseInt(daysInput, 10); const offset = days <= 15 ? -15 + days : -30 + days; const d = new Date(); d.setDate(d.getDate() + offset); return `${d.getFullYear().toString().slice(-2)}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}` })()}
+                </span>
+              )}
+            </div>
+          </div>
 
           <div>
             <p className="mb-3 text-[11px] font-semibold tracking-widest uppercase text-ct-content-muted">参数输入</p>

@@ -16,8 +16,10 @@ export function ImageDropZone({ onFiles, multiple = false, scanning = false, lab
 
   const handleFiles = useCallback((files: FileList | File[] | null) => {
     if (!files) return
-    const imgs = Array.from(files).filter(f => f.type.startsWith('image/'))
-    if (imgs.length > 0) onFiles(multiple ? imgs : [imgs[0]])
+    const accepted = Array.from(files).filter(
+      f => f.type.startsWith('image/') || f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'),
+    )
+    if (accepted.length > 0) onFiles(multiple ? accepted : [accepted[0]])
   }, [onFiles, multiple])
 
   useEffect(() => {
@@ -68,7 +70,7 @@ export function ImageDropZone({ onFiles, multiple = false, scanning = false, lab
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,application/pdf,.pdf"
         multiple={multiple}
         className="hidden"
         onChange={e => handleFiles(e.target.files)}

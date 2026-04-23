@@ -5,7 +5,7 @@ import { processDigitCrypto, type CryptoResult } from '../lib/digit-crypto'
 import { LockIcon, UnlockIcon } from '../ui/icons'
 import { useToast } from '../ui/Toast'
 import { ImageDropZone } from '../ui/ImageDropZone'
-import { extractTrailingDigits, scanBarcodeFile } from '../lib/barcodeReader'
+import { extractTrailingDigits, scanBarcodeFileOrPdf } from '../lib/barcodeReader'
 import { usePlatformOps } from '../lib/platformOps'
 import { CopyButton } from '../ui/CopyButton'
 import { parseQrPayload, type ParsedQrPayload } from '../lib/qr-payload'
@@ -70,7 +70,7 @@ export function DigitCryptoPage() {
     setError(null)
     try {
       const blob = await platform.readFileAsBlob(files[0])
-      const results = await scanBarcodeFile(blob)
+      const results = await scanBarcodeFileOrPdf(files[0].type === 'application/pdf' ? files[0] : blob)
       if (results.length === 0) throw new Error('未识别到二维码或条码，请确保图片清晰且二维码完整')
 
       const best = results.find(r => r.format === 'QRCode') ?? results[0]

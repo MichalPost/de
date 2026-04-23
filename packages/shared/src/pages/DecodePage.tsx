@@ -5,7 +5,7 @@ import { CopyButton } from '../ui/CopyButton'
 import { TextareaField } from '../ui/Field'
 import { ImageDropZone } from '../ui/ImageDropZone'
 import { decodeLongCode } from '../lib/reagent-code'
-import { scanBarcodeFile, classifyBarcode, cleanBarcodeText, toDecodeHex } from '../lib/barcodeReader'
+import { scanBarcodeFileOrPdf, classifyBarcode, cleanBarcodeText, toDecodeHex } from '../lib/barcodeReader'
 import { LEGACY_FIXTURES } from '../lib/custom-algorithm'
 import { ScanIcon } from '../ui/icons'
 import { motion, AnimatePresence } from 'motion/react'
@@ -79,7 +79,7 @@ export function DecodePage() {
     setError(null)
     try {
       const blob = await platform.readFileAsBlob(files[0])
-      const results = await scanBarcodeFile(blob)
+      const results = await scanBarcodeFileOrPdf(blob.type === 'application/pdf' ? files[0] : blob)
       if (results.length === 0) {
         setError('未识别到条码，请确保图片清晰且包含 Code128 条码')
         return

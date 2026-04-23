@@ -1,6 +1,56 @@
 import { readBarcodesFromImageFile, type ReaderOptions } from 'zxing-wasm/reader'
 import { asciiToBytes, bytesToHex } from './utils'
 
+// ─── PDF support ────────────────────────────────────────────────────────────
+
+async function pdfToImageBlobs(file: File | Blob): Promise<Blob[]> {
+  const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist')
+  // Use the bundled legacy worker (no separate worker file needed)
+  GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.mjs',
+    import.meta.url,
+  ).toString()
+
+  const arrayBuffer = await file.arrayBuffer()
+  const pdf = await getDocument({ data: arrayBuffer }).promise
+  const blobs: Blob[] = []
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i)
+    const viewport = page.getViewport({ scale: 2.0 })
+    const canvas = document.createElement('canvas')
+    canvas.width = viewport.width
+    canvas.height = viewport.height
+    const ctx = canvas.getContext('2d')!
+    await page.render({ canvasContext: ctx, viewport }).promise
+    const blob = await new Promise<Blob>((res, rej) =>
+      canvas.toBlob(b => (b ? res(b) : rej(new Error('canvas toBlob failed'))), 'image/png'),
+    )
+    blobs.push(blob)
+  }
+  return blobs
+}
+
+/**
+ * Scan a File/Blob for barcodes. If the file is a PDF, each page is rendered
+ * to a canvas first, then scanned. Returns all found results across all pages.
+ */
+export async function scanBarcodeFileOrPdf(file: File | Blob): Promise<ScanResult[]> {
+  const isPdf =
+    (file instanceof File && (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf')) ||
+    file.type === 'application/pdf'
+
+  if (!isPdf) return scanBarcodeFile(file)
+
+  const pages = await pdfToImageBlobs(file)
+  const all: ScanResult[] = []
+  for (const page of pages) {
+    const results = await scanBarcodeFile(page)
+    all.push(...results)
+  }
+  return all
+}
+
 const READER_OPTIONS: ReaderOptions = {
   formats: ['Code128', 'QRCode'],
   tryHarder: true,

@@ -13,11 +13,21 @@
   },
   "typesVersions": {
     "*": {
-      "lib/*": ["src/lib/*"],
-      "ui/*": ["src/ui/*"],
-      "store/*": ["src/store/*"],
-      "features/*": ["src/features/*"],
-      "pages/*": ["src/pages/*"]
+      "lib/*": [
+        "src/lib/*"
+      ],
+      "ui/*": [
+        "src/ui/*"
+      ],
+      "store/*": [
+        "src/store/*"
+      ],
+      "features/*": [
+        "src/features/*"
+      ],
+      "pages/*": [
+        "src/pages/*"
+      ]
     }
   },
   "scripts": {
@@ -25,7 +35,9 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "dependencies": {},
+  "dependencies": {
+    "pdfjs-dist": "^5.6.205"
+  },
   "peerDependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@react-pdf/renderer": "^4.5.1",

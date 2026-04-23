@@ -5,7 +5,7 @@ import { Button } from '../ui/Button'
 import { PanelHeader } from '../ui/PanelHeader'
 import { CopyButton } from '../ui/CopyButton'
 import { ImageDropZone } from '../ui/ImageDropZone'
-import { scanBarcodeFile, classifyBarcode, cleanBarcodeText, toDecodeHex } from '../lib/barcodeReader'
+import { scanBarcodeFileOrPdf, classifyBarcode, cleanBarcodeText, toDecodeHex } from '../lib/barcodeReader'
 import { decodeLongCode } from '../lib/reagent-code'
 import { usePlatformOps } from '../lib/platformOps'
 import { twMerge } from 'tailwind-merge'
@@ -27,6 +27,7 @@ export function ScanBatchPage() {
   const [records, setRecords] = useState<ScanRecord[]>([])
   const [scanning, setScanning] = useState(false)
   const [progress, setProgress] = useState({ done: 0, total: 0 })
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const previewUrlsRef = useRef<Set<string>>(new Set())
   const platform = usePlatformOps()
 
@@ -52,6 +53,7 @@ export function ScanBatchPage() {
         name: file.name,
         blob: await platform.readFileAsBlob(file),
         previewUrl: URL.createObjectURL(file),
+        isPdf: file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'),
       }))
     )
 
@@ -61,7 +63,7 @@ export function ScanBatchPage() {
       const id = `${Date.now()}-${i}`
 
       try {
-        const results = await scanBarcodeFile(blob)
+        const results = await scanBarcodeFileOrPdf(fileData[i].isPdf ? files[i] : blob)
         if (results.length === 0) {
           newRecords.push({ id, filename: name, previewUrl, status: 'error', barcodeText: '', barcodeKind: 'unknown', decoded: null, error: '未识别到条码' })
         } else {
@@ -107,6 +109,26 @@ export function ScanBatchPage() {
     for (const url of previewUrlsRef.current) URL.revokeObjectURL(url)
     previewUrlsRef.current.clear()
     setRecords([])
+    setExpandedIds(new Set())
+  }
+
+  const expandableIds = records.filter(r => r.decoded || r.barcodeKind === 'short').map(r => r.id)
+  const allExpanded = expandableIds.length > 0 && expandableIds.every(id => expandedIds.has(id))
+
+  const toggleExpandAll = () => {
+    if (allExpanded) {
+      setExpandedIds(new Set())
+    } else {
+      setExpandedIds(new Set(expandableIds))
+    }
+  }
+
+  const toggleOne = (id: string) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
   }
 
   const okCount = records.filter(r => r.status === 'ok').length
@@ -129,7 +151,16 @@ export function ScanBatchPage() {
           }
           actions={
             records.length > 0
-              ? <Button variant="ghost" size="sm" onClick={clearAll}>清空</Button>
+              ? (
+                <div className="flex items-center gap-1.5">
+                  {expandableIds.length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={toggleExpandAll}>
+                      {allExpanded ? '全部收起' : '全部展开'}
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={clearAll}>清空</Button>
+                </div>
+              )
               : undefined
           }
           className="px-0"
@@ -165,7 +196,11 @@ export function ScanBatchPage() {
                 exit={{ opacity: 0, scale: 0.97 }}
                 transition={{ duration: 0.18, delay: Math.min(i * 0.02, 0.2) }}
               >
-                <ScanRecordCard record={r} />
+                <ScanRecordCard
+                  record={r}
+                  expanded={expandedIds.has(r.id)}
+                  onToggle={() => toggleOne(r.id)}
+                />
               </motion.div>
             ))}
           </AnimatePresence>
@@ -187,8 +222,16 @@ const FIELD_LABELS: [string, string][] = [
   ['serialNumber', '序号'], ['agentId', '代理商'], ['customerId', '客户编号'],
 ]
 
-function ScanRecordCard({ record }: { record: ScanRecord }) {
-  const [expanded, setExpanded] = useState(false)
+function ScanRecordCard({ record, expanded, onToggle }: { record: ScanRecord; expanded: boolean; onToggle: () => void }) {
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+
+  const copyField = (key: string, val: string) => {
+    if (!val) return
+    navigator.clipboard.writeText(val).then(() => {
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(null), 1200)
+    })
+  }
 
   return (
     <div
@@ -232,7 +275,7 @@ function ScanRecordCard({ record }: { record: ScanRecord }) {
           {(record.decoded || record.barcodeKind === 'short') && (
             <button
               type="button"
-              onClick={() => setExpanded(v => !v)}
+              onClick={onToggle}
               className="cursor-pointer rounded-md border border-ct-border bg-ct-surface-input px-2 py-1 text-[11px] text-ct-content-secondary transition-colors hover:border-ct-brand hover:text-ct-brand-foreground"
             >
               {expanded ? '收起' : '展开字段'}
@@ -254,15 +297,25 @@ function ScanRecordCard({ record }: { record: ScanRecord }) {
               <div className="px-3 py-3 grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-2">
                 {FIELD_LABELS.map(([key, label]) => {
                   const val = String((record.decoded!.fields as Record<string, unknown>)[key] ?? '')
+                  const copied = copiedKey === key
                   return (
                     <div
                       key={key}
-                      className="flex cursor-pointer flex-col gap-0.5 rounded-lg border border-ct-border bg-ct-surface-input p-2 transition-colors hover:border-ct-brand"
-                      onClick={() => val && navigator.clipboard.writeText(val)}
+                      className={twMerge(
+                        'flex cursor-pointer flex-col gap-0.5 rounded-lg border p-2 transition-colors',
+                        copied
+                          ? 'border-ct-success-border bg-ct-success-soft'
+                          : 'border-ct-border bg-ct-surface-input hover:border-ct-brand',
+                      )}
+                      onClick={() => copyField(key, val)}
                       title="点击复制"
                     >
-                      <span className="text-[10px] text-ct-content-muted">{label}</span>
-                      <span className="text-[13px] font-semibold font-mono text-ct-content-primary">{val || '—'}</span>
+                      <span className={twMerge('text-[10px]', copied ? 'text-ct-success-foreground' : 'text-ct-content-muted')}>
+                        {copied ? '已复制' : label}
+                      </span>
+                      <span className={twMerge('text-[13px] font-semibold font-mono', copied ? 'text-ct-success-foreground' : 'text-ct-content-primary')}>
+                        {val || '—'}
+                      </span>
                     </div>
                   )
                 })}
