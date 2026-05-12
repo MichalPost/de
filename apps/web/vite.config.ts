@@ -30,6 +30,12 @@ export default defineConfig(
         'jspdf',
         '@react-pdf/renderer',
         '@tanstack/react-virtual',
+        // Tauri 插件 - 需要预打包以避免模块解析错误
+        '@tauri-apps/api',
+        '@tauri-apps/plugin-dialog',
+        '@tauri-apps/plugin-fs',
+        '@tauri-apps/plugin-process',
+        '@tauri-apps/plugin-updater',
       ],
     },
   }),

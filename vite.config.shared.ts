@@ -13,6 +13,12 @@ export const sharedViteConfig = {
       'tailwind-merge', 'comlink', 'ahooks',
       'html2canvas', 'jspdf', 'svg2pdf.js',
       '@react-pdf/renderer', '@tanstack/react-virtual',
+      // Tauri 相关包也需要去重
+      '@tauri-apps/api',
+      '@tauri-apps/plugin-dialog',
+      '@tauri-apps/plugin-fs',
+      '@tauri-apps/plugin-process',
+      '@tauri-apps/plugin-updater',
     ],
   },
   server: {
