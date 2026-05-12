@@ -2,5 +2,8 @@ packages:
   - packages/*
   - apps/*
 
-ignoredBuiltDependencies:
-  - core-js
+# pnpm v10+ 构建脚本安全配置
+# 明确允许或禁止包的构建脚本运行
+# false = 不运行构建脚本（安全，推荐用于不需要构建的包）
+allowBuilds:
+  core-js: false
