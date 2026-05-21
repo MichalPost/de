@@ -8,6 +8,8 @@ interface Props {
   onCustomerChange: (v: string) => void
   agentLabel?: string
   customerLabel?: string
+  /** Called when a valid customer code is successfully parsed and applied */
+  onCodeApplied?: () => void
 }
 
 function parseCustomerCode(raw: string): { agentId: number; customerId: number } | null {
@@ -22,6 +24,7 @@ function parseCustomerCode(raw: string): { agentId: number; customerId: number }
 export function CustomerCodeInput({
   agentValue, customerValue, onAgentChange, onCustomerChange,
   agentLabel = '代理商（4位）', customerLabel = '客户编号（5位）',
+  onCodeApplied,
 }: Props) {
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -39,7 +42,8 @@ export function CustomerCodeInput({
     setOk(true)
     onAgentChange(String(parsed.agentId).padStart(4, '0'))
     onCustomerChange(String(parsed.customerId).padStart(5, '0'))
-  }, [onAgentChange, onCustomerChange])
+    onCodeApplied?.()
+  }, [onAgentChange, onCustomerChange, onCodeApplied])
 
   return (
     <div

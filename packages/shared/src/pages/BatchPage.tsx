@@ -192,12 +192,15 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
       setRecords(result)
       addEntry({ templateName: activeTemplate.name, recordCount: result.length, records: result, printMode, printCols, printPerPage })
       setError(null)
+      // Auto-copy the long image after successful generation
+      copyImageState.copy(() => platform.copyBatchAsImage(result, effectiveMode, printCols, printPerPage))
+        .catch(() => { /* silent — user can manually copy */ })
     } catch (e) {
       setError((e as Error).message)
     } finally {
       setRunning(false)
     }
-  }, [agentOverride, customerOverride, serialCountOverride, validUsesOverride, activeTemplate, printMode, printCols, printPerPage, setRecords, setError, setRunning, addEntry, runWorkerTask])
+  }, [agentOverride, customerOverride, serialCountOverride, validUsesOverride, activeTemplate, printMode, printCols, printPerPage, setRecords, setError, setRunning, addEntry, runWorkerTask, copyImageState, platform, effectiveMode])
 
   const handleExportPng = async () => {
     try {
@@ -208,9 +211,11 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
         `批量生成_${activeTemplate.name}_${new Date().toISOString().slice(0, 10)}.png`)
     } catch (e) { setError((e as Error).message) }
   }
-  const handleCopyImage = () =>
-    copyImageState.copy(() => platform.copyBatchAsImage(records, effectiveMode, printCols, printPerPage))
+  const handleCopyImage = useCallback((currentRecords?: BatchGeneratedRecord[]) => {
+    const r = currentRecords ?? records
+    return copyImageState.copy(() => platform.copyBatchAsImage(r, effectiveMode, printCols, printPerPage))
       .catch(e => setError((e as Error).message))
+  }, [copyImageState, platform, records, effectiveMode, printCols, printPerPage, setError])
   const handleExportPdf = async () => {
     try {
       setError(null)
@@ -254,6 +259,7 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
           onPreserveOverridesSwitch={setPreserveOverridesOnTemplateSwitch}
           running={running} error={error}
           onGenerate={handleGenerate}
+          onCustomerCodeApplied={handleGenerate}
         />
       </div>
 
@@ -266,7 +272,7 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
         onViewMode={setViewMode} onPrintMode={setPrintMode}
         onCols={setPrintCols} onPerPage={setPrintPerPage}
         onPage={setCurrentPage}
-        onCopyImage={handleCopyImage}
+        onCopyImage={() => handleCopyImage()}
         onExportPng={handleExportPng}
         onExportPdf={handleExportPdf}
         onOpenHistory={() => setHistoryOpen(true)}
@@ -343,7 +349,7 @@ function TemplatePanel({ templates, activeId, onSelect, onEdit, onDelete, onNew 
 // ── InputPanel ────────────────────────────────────────────────────────────────
 function InputPanel({ activeTemplate, agentOverride, customerOverride, serialCountOverride, validUsesOverride,
   preserveOverridesOnTemplateSwitch, onAgentChange, onCustomerChange, onSerialCountChange, onValidUsesChange,
-  onPreserveOverridesSwitch, running, error, onGenerate }: {
+  onPreserveOverridesSwitch, running, error, onGenerate, onCustomerCodeApplied }: {
   activeTemplate: TemplateDefinition
   agentOverride: string; customerOverride: string
   serialCountOverride: string; validUsesOverride: string
@@ -353,6 +359,8 @@ function InputPanel({ activeTemplate, agentOverride, customerOverride, serialCou
   onPreserveOverridesSwitch: (v: boolean) => void
   running: boolean; error: string | null
   onGenerate: () => void
+  /** Called when a valid customer code is applied — triggers re-generation */
+  onCustomerCodeApplied?: () => void
 }) {
   return (
     <Card className="md:flex-1 lg:w-[300px] lg:flex-none shrink-0 flex flex-col lg:min-h-0">
@@ -372,6 +380,7 @@ function InputPanel({ activeTemplate, agentOverride, customerOverride, serialCou
           agentValue={agentOverride} customerValue={customerOverride}
           onAgentChange={onAgentChange} onCustomerChange={onCustomerChange}
           agentLabel="代理商（覆盖）" customerLabel="客户编号（覆盖）"
+          onCodeApplied={onCustomerCodeApplied}
         />
 
         {activeTemplate.genMode === 'serial' && (

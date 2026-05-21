@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useState, useEffect, type KeyboardEvent } from 'react'
 import { Card, CardHeader, StatusBar } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { processDigitCrypto, type CryptoResult } from '../lib/digit-crypto'
@@ -46,19 +46,26 @@ export function DigitCryptoPage() {
       .catch(() => showToast('复制失败', 'error'))
   }
 
-  const runProcess = (nextNumber = number, nextOperation = operation) => {
+  const runProcess = (nextNumber = number, nextOperation = operation, silent = false) => {
     try {
       const r = processDigitCrypto({ number: nextNumber, digitKey, globalKey, operation: nextOperation })
       setResult(r)
       setError(null)
       const toCopy = nextOperation === 'encrypt' ? r.finalResult : r.decryptedResult
       navigator.clipboard.writeText(toCopy).catch(() => {})
-      showToast('已复制结果')
+      if (!silent) showToast('已复制结果')
     } catch (e) {
       setError((e as Error).message)
       setResult(null)
     }
   }
+
+  // Auto-calculate whenever any input changes
+  useEffect(() => {
+    if (!number.trim()) { setResult(null); setError(null); return }
+    runProcess(number, operation, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [number, digitKey, globalKey, operation])
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) runProcess()

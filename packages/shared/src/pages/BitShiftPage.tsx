@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useState, useEffect, type KeyboardEvent } from 'react'
 import { Card, CardHeader, StatusBar } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { calculateShift, type ShiftInput, type ShiftResult, type BaseType, type ShiftMethod } from '../lib/bit-shift'
@@ -36,19 +36,26 @@ export function BitShiftPage() {
   const [error, setError] = useState<string | null>(null)
   const { showToast } = useToast()
 
-  const calculate = (overrideShift?: number) => {
+  const calculate = (overrideShift?: number, silent = false) => {
     const s = overrideShift ?? shift
     try {
       const r = calculateShift({ number, base, shift: s, method, padding } as ShiftInput)
       setResult(r)
       setError(null)
       navigator.clipboard.writeText(String(r.decResult)).catch(() => {})
-      showToast('已复制十进制结果')
+      if (!silent) showToast('已复制十进制结果')
     } catch (e) {
       setError((e as Error).message)
       setResult(null)
     }
   }
+
+  // Auto-calculate whenever any input changes
+  useEffect(() => {
+    if (!number.trim()) { setResult(null); setError(null); return }
+    calculate(undefined, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [number, base, shift, method, padding])
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) calculate()
@@ -128,8 +135,8 @@ export function BitShiftPage() {
           </div>
 
           <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto]">
-            <Button variant="ghost" size="md" onClick={() => { setShift(10); calculate(10) }} className="justify-center" fullWidth>仪器</Button>
-            <Button variant="ghost" size="md" onClick={() => { setShift(12); calculate(12) }} className="justify-center" fullWidth>试剂包</Button>
+            <Button variant="ghost" size="md" onClick={() => setShift(10)} className="justify-center" fullWidth>仪器</Button>
+            <Button variant="ghost" size="md" onClick={() => setShift(12)} className="justify-center" fullWidth>试剂包</Button>
             <Button variant="primary" size="md" onClick={() => calculate()} className="col-span-2 sm:col-span-1 justify-center" fullWidth>
               <ZapIcon /> 计算
             </Button>
