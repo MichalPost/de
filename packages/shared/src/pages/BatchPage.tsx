@@ -163,14 +163,22 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
     setError(null)
     setRunning(true)
     try {
+      // Read overrides directly from the store at call time to avoid stale closure
+      // values when auto-generation triggers immediately after onAgentChange/onCustomerChange.
+      const {
+        agentOverride: ag,
+        customerOverride: cu,
+        serialCountOverride: sc,
+        validUsesOverride: vu,
+      } = useBatchDataStore.getState()
       const overrides = {
-        agentIdOverride: agentOverride.trim() ? Number(agentOverride) : undefined,
-        customerIdOverride: customerOverride.trim() ? Number(customerOverride) : undefined,
-        validUsesOverride: validUsesOverride.trim() ? Number(validUsesOverride) : undefined,
+        agentIdOverride: ag.trim() ? Number(ag) : undefined,
+        customerIdOverride: cu.trim() ? Number(cu) : undefined,
+        validUsesOverride: vu.trim() ? Number(vu) : undefined,
       }
       let result: BatchGeneratedRecord[]
       if (activeTemplate.genMode === 'serial') {
-        const count = serialCountOverride.trim() ? parseInt(serialCountOverride, 10) : activeTemplate.genCount
+        const count = sc.trim() ? parseInt(sc, 10) : activeTemplate.genCount
         if (isNaN(count) || count < 1) throw new Error('数量至少为 1')
         const reagentIds = Array.from({ length: count }, () => activeTemplate.reagentId)
         const template = { ...activeTemplate, serialMode: 'increment' as const }
@@ -200,7 +208,7 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
     } finally {
       setRunning(false)
     }
-  }, [agentOverride, customerOverride, serialCountOverride, validUsesOverride, activeTemplate, printMode, printCols, printPerPage, setRecords, setError, setRunning, addEntry, runWorkerTask, copyImageState, platform, effectiveMode])
+  }, [activeTemplate, printMode, printCols, printPerPage, setRecords, setError, setRunning, addEntry, runWorkerTask, copyImageState, platform, effectiveMode])
 
   const handleExportPng = async () => {
     try {
