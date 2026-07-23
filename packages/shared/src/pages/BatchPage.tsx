@@ -159,7 +159,11 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
     setIsNew(false)
   }
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = useCallback(async (templateOverride?: TemplateDefinition) => {
+    // When called from onSelect, templateOverride carries the newly-selected template
+    // so we don't rely on the activeTemplate closure value (which may not yet reflect
+    // the React re-render triggered by setActiveId).
+    const template = templateOverride ?? activeTemplate
     setError(null)
     setRunning(true)
     try {
@@ -177,28 +181,28 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
         validUsesOverride: vu.trim() ? Number(vu) : undefined,
       }
       let result: BatchGeneratedRecord[]
-      if (activeTemplate.genMode === 'serial') {
-        const count = sc.trim() ? parseInt(sc, 10) : activeTemplate.genCount
+      if (template.genMode === 'serial') {
+        const count = sc.trim() ? parseInt(sc, 10) : template.genCount
         if (isNaN(count) || count < 1) throw new Error('数量至少为 1')
-        const reagentIds = Array.from({ length: count }, () => activeTemplate.reagentId)
-        const template = { ...activeTemplate, serialMode: 'increment' as const }
+        const reagentIds = Array.from({ length: count }, () => template.reagentId)
+        const tpl = { ...template, serialMode: 'increment' as const }
+        result = await runWorkerTask(
+          workerApi => workerApi.buildBatchCodes(tpl, { reagentIds, ...overrides }),
+          () => buildBatchCodes(tpl, { reagentIds, ...overrides }),
+        )
+      } else {
+        const reagentIds = await runWorkerTask(
+          workerApi => workerApi.parseReagentIds(template.genIdList),
+          () => parseReagentIds(template.genIdList),
+        )
+        if (reagentIds.length === 0) throw new Error('编号列表为空，请先编辑模板')
         result = await runWorkerTask(
           workerApi => workerApi.buildBatchCodes(template, { reagentIds, ...overrides }),
           () => buildBatchCodes(template, { reagentIds, ...overrides }),
         )
-      } else {
-        const reagentIds = await runWorkerTask(
-          workerApi => workerApi.parseReagentIds(activeTemplate.genIdList),
-          () => parseReagentIds(activeTemplate.genIdList),
-        )
-        if (reagentIds.length === 0) throw new Error('编号列表为空，请先编辑模板')
-        result = await runWorkerTask(
-          workerApi => workerApi.buildBatchCodes(activeTemplate, { reagentIds, ...overrides }),
-          () => buildBatchCodes(activeTemplate, { reagentIds, ...overrides }),
-        )
       }
       setRecords(result)
-      addEntry({ templateName: activeTemplate.name, recordCount: result.length, records: result, printMode, printCols, printPerPage })
+      addEntry({ templateName: template.name, recordCount: result.length, records: result, printMode, printCols, printPerPage })
       setError(null)
       // Auto-copy the long image after successful generation
       copyImageState.copy(() => platform.copyBatchAsImage(result, effectiveMode, printCols, printPerPage))
@@ -250,6 +254,17 @@ export function BatchPage({ worker }: BatchPageProps = {}) {
             if (!preserveOverridesOnTemplateSwitch) {
               setAgentOverride(''); setCustomerOverride('')
               setSerialCountOverride(''); setValidUsesOverride('')
+            }
+            // Auto-generate when there are active overrides after the switch.
+            // We read the store directly (not React state) to get the values that
+            // will actually be used — this avoids the React re-render lag for
+            // setAgentOverride/setCustomerOverride calls made just above.
+            const { agentOverride: ag, customerOverride: cu } = useBatchDataStore.getState()
+            const effectiveAg = preserveOverridesOnTemplateSwitch ? ag : ''
+            const effectiveCu = preserveOverridesOnTemplateSwitch ? cu : ''
+            if (effectiveAg.trim() || effectiveCu.trim()) {
+              const newTemplate = templates.find(t => t.id === id) ?? templates[0]
+              handleGenerate(newTemplate)
             }
           }}
           onEdit={(t) => { setIsNew(false); setEditingTemplate(t) }}
