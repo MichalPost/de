@@ -129,5 +129,8 @@ export function toDecodeHex(text: string): string | null {
  */
 export function extractTrailingDigits(text: string): string | null {
   const match = text.match(/(\d+)(?![\s\S]*\d)/)
-  return match?.[1] ?? null
+  if (!match) return null
+  const digits = match[1]
+  // 5位数字说明原始数字是6位但首位为0（加密后丢失前导零），自动补回
+  return digits.length === 5 ? `0${digits}` : digits
 }

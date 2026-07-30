@@ -9,11 +9,21 @@ describe('extractTrailingDigits', () => {
       '\\X04426010109|43384#',
     ].join('\n')
 
-    expect(extractTrailingDigits(payload)).toBe('43384')
+    // 5-digit result → auto-padded to 6 digits with leading zero
+    expect(extractTrailingDigits(payload)).toBe('043384')
   })
 
   it('returns the last digit group even when non-digits follow it', () => {
-    expect(extractTrailingDigits('abc-12-def-43384#done')).toBe('43384')
+    // 5 digits → padded to 6
+    expect(extractTrailingDigits('abc-12-def-43384#done')).toBe('043384')
+  })
+
+  it('does not pad 6-digit numbers', () => {
+    expect(extractTrailingDigits('payload-123456')).toBe('123456')
+  })
+
+  it('does not pad 4-digit numbers', () => {
+    expect(extractTrailingDigits('payload-1234')).toBe('1234')
   })
 
   it('returns null when no digits exist', () => {
